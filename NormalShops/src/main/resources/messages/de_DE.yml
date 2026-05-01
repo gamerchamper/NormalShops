@@ -1,0 +1,286 @@
+# General
+update: "&eNormalShops: &a&lNeue Version verfügbar."
+no-permission: "Du bist nicht berechtigt, das zu tun."
+feature-disabled: "Diese Funktion ist deaktiviert."
+shop-no-break: "Du kannst diesen Shop nicht entfernen."
+shop-break-owner: "Du hast diesen Shop entfernt."
+shop-break-operator: "Du hast den Shop von &l{owner}&e entfernt."
+pile-no-break: "Du kannst diese Gewinntruhe nicht entfernen."
+pile-break-owner: "Du hast diese Gewinntruhe entfernt."
+pile-break-operator: "Du hast die Gewinntruhe von &l{owner}&e entfernt."
+block-place: "Du kannst hier keinen Block platzieren."
+shop-error: "Dieser Shop existiert nicht mehr."
+pile-not-owner: "Du kannst diese Gewinntruhe nicht öffnen."
+
+stockpile-not-owner: "Du kannst diese Lagertruhe nicht öffnen."
+stockpile-no-break: "Du kannst diese Lagertruhe nicht entfernen."
+stockpile-remove-first: "Du musst zuerst die Verbindung zum Shop entfernen, bevor du eine Lagertruhe entfernst."
+stockpile-no-hopper: "Du kannst keine Items von dieser Lagertruhe herausnehmen."
+
+break-confirm: "Um deinen Shop zu entfernen, benutze:\n&e- &2&lPreis & Produkte Ändern &6→ &c&lShop Löschen."
+break-operator-confirm: "Um diesen Shop zu entfernen, &lShift + Rechtsklick &eauf den Shop und klicke: &c&lShop Löschen."
+
+shop-limit: "Shoplimit pro Spieler erreicht: &6&l{limit}"
+pile-limit: "Gewinntruhelimit pro Spieler erreicht: &6&l{limit}"
+stockpile-limit: "Lagertruhelimit für diesen Shop erreicht: &6&l{limit}"
+pile-shop-limit: "Shoplimit für diese Gewinntruhe erreicht: &6&l{limit}"
+
+stock-warning: "Dein Shop bei &l{location} &chat keine Waren mehr auf Lager."
+
+# Transactions
+buy-no-stock: "Shop &lnicht auf Lager."
+buy-no-money: "Du hast nicht genug Geld."
+
+shop-at: "&aShop bei: &f&l{location}"
+shop-at-custom: "&a&l{name} &abei: &f&l{location}"
+shop-details: "&a&lBei: &f&l{location}\n&6Besitzer: &e&l{owner}"
+hover-various-products: "&a&nverschiedene Produkte"
+hover-your-shop: "&a&ndeinem Shop"
+buy-multiple: "Du hast [hoverVariousProducts]&a von &l{seller} &afür &f{price} &agekauft."
+buy-multiple-custom: "Du hast [hoverVariousProducts]&a von [hoverCustomName] &afür &f{price} &agekauft."
+buy-single: "Du hast &f{product} &avon &l{seller} &afür &f{price} &agekauft."
+buy-single-custom: "Du hast &f{product}&a von [hoverCustomName] &afür &f{price} &agekauft."
+sell-multiple: "&l{buyer} &ahat &a[hoverVariousProducts]&a von [hoverYourShop]&a für &f{price} &agekauft."
+sell-single: "&l{buyer} &ahat &f{product} &avon [hoverYourShop]&a für &f{price} &agekauft."
+
+# Connections
+connect-stockpile: "&6<< &eKlicke auf eine &lTruhe, &eum sie zu verbinden &6>>"
+connect-earnings: "&6<< &eKlicke auf eine &lEndertruhe, &eum sie zu verbinden &6>>"
+connect-shop: "&6<< &eKlicke auf einen &lShop, &eum ihn zu verbinden &6>>"
+
+connector-stockpile: "&lLagertruhe &averbunden."
+connector-earnings: "&lGewinntruhe &averbunden."
+connector-shop: "&lShop &amit Gewinntruhe verbunden."
+connector-cancel: "Verbindung storniert."
+connector-invalid: "Du kannst diesen Block nicht verbinden."
+
+connector-remove-stockpile: "&lLagertruhe &lentfernt."
+connector-remove-earnings: "&lGewinntruhe &lentfernt."
+connector-remove-shop: "&lShop &evon Gewinntruhe entfernt."
+
+clear-stockpiles: "&lAlle Lagertruhen &eentfernt."
+
+# Menu Interactions
+collect-no-earnings: "Du hast keine Gewinne in diesem Shop."
+collect-earnings: "Du hast &l{earnings} &avon diesem Shop gesammelt."
+collect-pile-earnings: "Du hast &l{earnings} &avon diesem Shop gesammelt: &f{location}."
+collect-pile-no-earnings: "Du hast keine Gewinne in deinen verbundenen Shops."
+
+create-double-chest: "Du kannst keinen Shop bei einer Doppeltruhe erstellen."
+create-not-empty: "Dieser Behälter ist nicht leer."
+create-shop-exist: "Hier gibt es bereits einen Shop."
+create-invalid: "Überprüfe bitte den Preis und die Produkte."
+create-shop: "Shop erfolgreich erstellt."
+
+change-shop: "Änderungen am Preis und Produkt(e) gespeichert."
+delete-shop: "Shop &lgelöscht."
+
+custom-name-type: "Du hast &l10 Sekunden &eum einen neuen Shopnamen im Chat einzugeben:"
+custom-name-set: "Der Shopname deines Shops wurde gesetzt auf: &f&l{name}"
+custom-name-cancel: "Shopname-Auswahl abgebrochen."
+custom-name-remove: "Der Shopname wurde entfernt."
+custom-name-invalid: "Dieser Shopname ist zu lang."
+
+sale-text-type: "Du hast &l10 Sekunden &eum eine Rabattankündigung im Chat einzugeben:"
+sale-text-set: "Die Rabattankündigung deines Shops wurde gesetzt auf: &f&l{name}"
+sale-text-cancel: "Rabattankündigung-Auswahl abgebrochen."
+sale-text-remove: "Die Rabattankündigung wurde entfernt."
+sale-text-invalid: "Diese Rabattankündigung ist zu lang."
+
+not-block: "Bitte einen gültigen Block eingeben."
+glass-not-glass: "Bitte einen gültigen Glasblock eingeben."
+glass-change-glass: "Glasfarbe geändert."
+glass-change-base: "Farbe der Unterlage geändert."
+
+frame-add-frame: "Rahmenmaterial geändert."
+frame-remove-frame: "Rahmen entfernt."
+
+block-change: "Shopblock geändert."
+
+display-clear: "Shopanzeige entfernt."
+
+display-glass-build: "Glasanzeige aufgebaut."
+display-glass-invalid-block: "Du kannst keine Glasanzeige aufbauen, wenn sich oben ein Block befindet."
+display-glass-invalid-light: "Du kannst kein Licht hinzufügen, wenn sich oben ein Block befindet."
+
+display-frame-build: "Rahmenanzeige aufgebaut."
+display-frame-invalid-chest: "Du kannst keine Rahmenanzeige hinzufügen, wenn der Shopblock eine Truhe ist."
+
+# Menu titles
+menu-change-shop: "&8&lPreis&r &6&l|&r &2&lSpeichern&r &6&l|&r &8&lProdukt"
+menu-create-shop: " &8&lPreis&r &6&l|&r &2&lErstellen&r &6&l|&r &8&lProdukt"
+menu-shop-open: "&2&l⚒ Shop geöffnet"
+menu-shop-closed: "&c&l⚒ Nicht auf Lager"
+menu-customize: "&l🖌 Shop anpassen"
+menu-buy: "$ Shop von {player}"
+menu-buy-custom: "{1}$ {2}&l{name}"
+menu-stock-chest: "&8📦 Eigenlagertruhe"
+menu-settings: "&8🛠 &lEinstellungen"
+menu-earnings: "&5🔌 &lGewinntruhe"
+menu-delete: "&4🗑 Shop von &l{owner}"
+menu-stockpile: "&8📦 Lagertruhe zu: &l{location}"
+menu-color: "&l🖌 Farbthema & Kaufton"
+
+# Buttons
+button-back: "&f◀ &lZURÜCK"
+button-back-lore-1: "&7Zum vorherigen Menü zurückkehren."
+
+# Create Menu
+button-price: "&lPREIS"
+button-price-lore-1: "&7Lege hier deinen Preis für die Produkte fest."
+
+button-product: "&lPRODUKT"
+button-product-lore-1: "&7Lege hier die Produkte fest, die du verkaufen möchtest."
+
+button-create-shop: "&a⚒ &lSHOP ERSTELLEN"
+button-create-shop-lore-1: "&2Klicke, um einen Shop zu erstellen."
+
+# Change Menu
+button-save-changes: "&a⚒ &lÄNDERUNGEN SPEICHERN"
+button-save-changes-lore-1: "&2Klicke, um die Änderungen am Preis und"
+button-save-changes-lore-2: "&2an den Produkten zu speichern."
+
+button-delete-shop: "&4❌ &lSHOP LÖSCHEN"
+button-delete-shop-lore-1: "&c&lDies ist &nnicht umkehrbar."
+button-delete-shop-lore-2: "&cKlicke, um den Shop zu löschen."
+
+button-delete-redirect: "&4❌ &lSHOP LÖSCHEN"
+button-delete-redirect-lore-1: "&cKlicke, um den Shop zu löschen."
+
+# Edit Menu
+button-change-shop: "&2🔀 &lPREIS UND PRODUKTE ÄNDERN"
+button-change-shop-lore-1: "&aKlicke, um den Preis und die Produkte zu ändern oder"
+button-change-shop-lore-2: "&aanzusehen, die du in diesem Shop verkaufst."
+
+button-collect: "&9💰 &lGEWINNE SAMMELN"
+button-collect-lore-1: "&6&lGewinne:&a&l {earnings}"
+button-collect-lore-2: "&bKlicke, um deine Gewinne in diesem Shop zu sammeln."
+button-none: "&c&lKeine"
+
+button-stock-chest: "&6🧰 &lEIGENLAGERTRUHE"
+button-stock-chest-lore-1: "&eKlicke, um das Eigenlager des Shops zu benutzen."
+button-stock-chest-lore-2: "&6&oTipp: &e&oDu kannst das Eigenlager benutzen"
+button-stock-chest-lore-3: "&e&owenn du keine Lagertruhe verbinden möchtest."
+
+button-settings: "&8🛠 &lEINSTELLUNGEN"
+button-settings-lore-1: "&7Klicke, um die Shopeinstellungen zu ändern."
+
+button-customize: "🖌 SHOP ANPASSEN"
+button-customize-lore-1: "&8Klicke, um den Shop anzupassen."
+
+button-connect-stock: "&8🔗 &lLAGERTRUHE VERBINDEN"
+button-connect-stock-lore-1: "&7Klicke, um eine Lagertruhe zu verbinden/trennen."
+button-connect-stock-lore-2: "&8&oTipp: &7&oDu kannst auf eine leere Stelle klicken,"
+button-connect-stock-lore-3: "&7&oum die Verbindung zu stornieren."
+
+button-connect-earnings: "&5🔌 &lGEWINNTRUHE VERBINDEN"
+button-connect-earnings-lore-1: "&dKlicke, um eine Gewinntruhe zu verbinden/trennen."
+button-connect-earnings-lore-2: "&5&oTipp: &d&oDu kannst auf eine leere Stelle klicken,"
+button-connect-earnings-lore-3: "&d&oum die Verbindung zu stornieren."
+
+# Buy Menu
+button-buy: "&a$ &lKAUFEN"
+button-buy-lore-1: "&6&lFor: &f&l{price}"
+button-buy-lore-2: "&2&lFrom: &a{player}"
+
+button-out-of-stock: "&4❌ &lNICHT AUF LAGER"
+button-out-of-stock-lore-1: "&cDieses Produkt ist ausverkauft."
+
+# Customize Menu
+button-color: "🖌 FARBTHEMA ÄNDERN"
+button-color-selected: "&e&l⭐ AUSGEWÄHLT ⭐"
+button-color-lore-1: "&8Klicke, um das Hintergrundfarbthema zu ändern."
+
+button-theme: "&6🛠 &f&lFARBTHEMA- & KAUFTONEINSTELLUNGEN"
+button-theme-lore-1: "&8Klicke, um die Farbthema oder den Kaufton"
+button-theme-lore-2: "&8zu ändern."
+
+button-sound: "&3🎵 &f&lKAUFTON ÄNDERN"
+button-sound-selected: "&e&l⭐ AUSGEWÄHLT ⭐"
+button-sound-lore-1: "&8Klicke um den Kaufton zu ändern."
+
+button-change-block: "&6🧰 &f&lSHOPBLOCK ÄNDERN"
+button-change-block-lore-1: "&7Lege hier einen Block ein, um den Shopblock zu ändern."
+button-change-block-lore-2: "&f&oTipp: &7&oDer Block wird in die Richtung platziert,"
+button-change-block-lore-3: "&7&oin die du blickst."
+
+button-clear-display: "&4❌ &lANZEIGE ENTFERNEN"
+button-clear-display-lore-1: "&cKlicke, um die Shopanzeige zu entfernen."
+
+button-add-custom-name: "&6📖 &f&lSHOPNAMEN ÄNDERN"
+button-add-custom-name-lore-1: "&7Klicke, um einen benutzerdefinierten Namen"
+button-add-custom-name-lore-2: "&7zu diesem Shop hinzuzufügen. Er wird im"
+button-add-custom-name-lore-3: "&7Kaufmenü angezeigt."
+
+button-remove-custom-name: "&6📖 &f&lSHOPNAMEN ENTFERNEN"
+button-remove-custom-name-lore-1: "&7Klicke, um den benutzerdefinierten Namen"
+button-remove-custom-name-lore-2: "&7zu entfernen. Dein Name wird im Kaufmenü"
+button-remove-custom-name-lore-3: "&7angezeigt."
+
+button-glass-display: "&6🪟 &f&lGLASANZEIGE AUFBAUEN"
+button-glass-display-lore-1: "&7Klicke, um eine Glasanzeige aufzubauen."
+
+button-display-change-glass: "&6🪟 &f&lGLASFARBE ÄNDERN"
+button-display-change-glass-lore-1: "&7Lege hier einen Glasblock ein, um die Glasfarbe zu ändern."
+
+button-display-change-base: "&6🪟 &f&lUNTERLAGE ÄNDERN"
+button-display-change-base-lore-1: "&7Lege hier einen Block ein, um den Anzeigeunterlage zu ändern."
+
+button-display-add-light: "&6🪟 &f&lLICHT HINZUFÜGEN"
+button-display-add-light-lore-1: "&7Klicke, um ein Licht zu der Anzeige hinzuzufügen."
+
+button-display-remove-light: "&6🪟 &f&lLICHT ENTFERNEN"
+button-display-remove-light-lore-1: "&7Klicke, um das Licht von der Anzeige zu entfernen."
+
+button-display-add-sale: "&6📖 &f&lRABATTANKÜNDIGUNG HINZUFÜGEN"
+button-display-add-sale-lore-1: "&7Klicke, um einen Text zum Anzeige hinzuzufügen."
+
+button-display-remove-sale: "&6📖 &f&lRABATTANKÜNDIGUNG ENTFERNEN"
+button-display-remove-sale-lore-1: "&7Klicke, um den Text vom Anzeige zu entfernen."
+
+button-frame-display: "&6🖼 &f&lRAHMENANZEIGE AUFBAUEN"
+button-frame-display-lore-1: "&7Klicke, um eine Rahmenanzeige aufzubauen."
+button-frame-display-lore-2: "&f&oTipp: &7&oSie wird in die Richtung aufgebaut,"
+button-frame-display-lore-3: "&7&oin die du blickst."
+
+button-display-add-frame: "&6🖼 &f&lRAHMEN HINZUFÜGEN"
+button-display-add-frame-lore-1: "&7Lege hier einen Block ein, um einen Rahmen hinzuzufügen."
+
+button-display-remove-frame: "&6🖼 &f&lRAHMEN ENTFERNEN"
+button-display-remove-frame-lore-1: "&7Klicke, um den Rahmen zu entfernen."
+
+button-display-move-to-top: "&6🖼 &f&lOBEN AUFLEGEN"
+button-display-move-to-top-lore-1: "&7Klicke, um den Item oben aufzulegen."
+
+# Earnings Menu
+button-pile-collect: "&9💰 &lGEWINNE SAMMELN"
+button-pile-collect-lore-1: "&bKlicke, um Gewinne von all deinen Shops zu sammeln,"
+button-pile-collect-lore-2: "&bdie mit dieser Gewinntruhe verbunden sind."
+
+button-connect-shop: "&8🔌 &lSHOP VERBINDEN"
+button-connect-shop-lore-1: "&7Klicke, um einen Shop zu verbinden/trennen."
+button-connect-shop-lore-2: "&8&oTipp: &7&oBereits verbundene Shops"
+button-connect-shop-lore-3: "&7&osind mit blau markiert."
+
+# Settings Menu
+button-notifications-enabled: "&2🔊 &lKAUFBENACHRICHTIGUNGEN: &a&lAN"
+button-notifications-disabled: "&2🔇 &lKAUFBENACHRICHTIGUNGEN: &c&lAUS"
+button-notifications-enabled-lore-1: "&8Klicke, um die Kaufbenachrichtingungen"
+button-notifications-enabled-lore-2: "&8an- oder auszuschalten."
+
+button-stock-warning-enabled: "&6🔊 &lLAGERBESTANDSMELDUNG: &a&lAN"
+button-stock-warning-disabled: "&6🔇 &lLAGERBESTANDSMELDUNG: &c&lAUS"
+button-stock-warning-enabled-lore-1: "&8Klicke, um die Lagerbestandsmeldung"
+button-stock-warning-enabled-lore-2: "&8an- oder auszuschalten."
+
+button-clear-stockpiles: "&c🔗 &lALLE LAGERTRUHEN ENTFERNEN"
+button-clear-stockpiles-lore-1: "&8Klicke, um &nalle Lagertruhen&8 von"
+button-clear-stockpiles-lore-2: "&8deinem Shop zu entfernen."
+
+button-unlimited-enabled: "&6🔓 &lUNBEGRENZTES LAGER: &a&lAN"
+button-unlimited-disabled: "&6🔒 &lUNBEGRENZTES LAGER: &c&lAUS"
+button-unlimited-enabled-lore-1: "&c&oNur für &lAdmins &c&osichtbar."
+button-unlimited-enabled-lore-2: "&e&oDu sammelst keine Gewinne und erhältst keine"
+button-unlimited-enabled-lore-3: "&e&oBenachrichtigungen, wenn unbegrenztes Lager aktiviert ist."
+
+blank: "&7x"
