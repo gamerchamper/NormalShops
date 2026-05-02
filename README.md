@@ -27,6 +27,14 @@
 ---
 
 <br/>
+<img width="224" height="298" alt="image" src="https://github.com/user-attachments/assets/de783c62-31f3-4cf7-a1e7-24d82fd3f43a" />
+<img width="548" height="334" alt="image" src="https://github.com/user-attachments/assets/362ad388-f3ff-4646-af4d-b148de87de04" />
+<img width="652" height="466" alt="image" src="https://github.com/user-attachments/assets/8dd9a6a9-7a2e-48a8-982e-3caabd2d352b" />
+<img width="379" height="281" alt="image" src="https://github.com/user-attachments/assets/41465300-c59e-40de-b67c-7e8b5ec7c396" />
+<img width="476" height="248" alt="image" src="https://github.com/user-attachments/assets/bed8aeec-478b-4005-8c79-2258640ef58d" />
+<img width="350" height="226" alt="image" src="https://github.com/user-attachments/assets/fa11eb8a-079f-49e3-81e6-0072a36dbc4d" />
+<img width="358" height="252" alt="image" src="https://github.com/user-attachments/assets/88b0bcb6-ef4d-469e-acb6-a5f9776edb32" />
+
 
 ## Why NormalShops?
 
