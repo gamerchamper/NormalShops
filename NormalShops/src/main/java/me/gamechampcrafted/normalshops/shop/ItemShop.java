@@ -6,6 +6,7 @@ import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Setting;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
 import me.gamechampcrafted.normalshops.serialization.ItemShopSerializer;
+import me.gamechampcrafted.normalshops.shop.display.HintOnlyDisplay;
 import me.gamechampcrafted.normalshops.shop.display.ShopDisplay;
 import me.gamechampcrafted.normalshops.shop.display.ShopDisplayType;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -13,6 +14,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Nameable;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
@@ -67,6 +69,12 @@ public class ItemShop implements ConfigurationSerializable {
     private transient long earningsRevision = 0L;
     private final List<CoreProtectLogger.HistoryEntry> historyEntries;
 
+    /**
+     * Block type to restore when {@link Setting#DISPLAY_OUT_OF_STOCK} replaces the shop with bedrock.
+     */
+    @Nullable
+    private Material containerMaterial;
+
     public ItemShop(
             Location location,
             Player owner,
@@ -95,7 +103,8 @@ public class ItemShop implements ConfigurationSerializable {
                 0L,
                 0L,
                 0L,
-                new ArrayList<>()
+                new ArrayList<>(),
+                safeContainerMaterial(location.getBlock().getType())
         );
     }
 
@@ -121,7 +130,8 @@ public class ItemShop implements ConfigurationSerializable {
             long lifetimeStockAdded,
             long lifetimeStockRemoved,
             long lifetimeImpressions,
-            List<CoreProtectLogger.HistoryEntry> historyEntries
+            List<CoreProtectLogger.HistoryEntry> historyEntries,
+            @Nullable Material containerMaterial
     ) {
         this.location = location;
         this.ownerUUID = ownerUUID;
@@ -145,6 +155,17 @@ public class ItemShop implements ConfigurationSerializable {
         this.lifetimeStockRemoved = lifetimeStockRemoved;
         this.lifetimeImpressions = lifetimeImpressions;
         this.historyEntries = historyEntries;
+        this.containerMaterial = containerMaterial;
+    }
+
+    private static Material safeContainerMaterial(Material type) {
+        if (type == null || type == Material.AIR || type == Material.CAVE_AIR || type == Material.VOID_AIR) {
+            return Material.CHEST;
+        }
+        if (type == Material.BEDROCK) {
+            return Material.CHEST;
+        }
+        return type;
     }
 
     public static Inventory createStockInventory() {
@@ -160,10 +181,15 @@ public class ItemShop implements ConfigurationSerializable {
     }
 
     public void delete(Player deleter) {
+        NormalShops plugin = NormalShops.getInstance();
+        if (plugin != null && plugin.getShopBackupService() != null) {
+            plugin.getShopBackupService().recordRemoval(this);
+        }
         // Collect earnings
         if (isOwner(deleter) || Setting.OPERATOR_DELETE_SHOP_COLLECT.isEnabled()) {
             collectEarnings(deleter, true);
         }
+        restoreShopBlockFromBedrockPlaceholder();
         clearDisplay();
         //Drop stock chest contents
         for (ItemStack item : stockContents) {
@@ -270,6 +296,14 @@ public class ItemShop implements ConfigurationSerializable {
 
     public boolean hasStock() {
         return isAdminShop() || containsItems(stockContents, products) || getNextStockedInventory() != null;
+    }
+
+    /**
+     * When true, the physical shop is in “out of stock” mode (bedrock placeholder when enabled in config)
+     * and full display entities must not be built — only the stock-status hologram and related state apply.
+     */
+    public boolean isBedrockOutOfStockStorefront() {
+        return Setting.DISPLAY_OUT_OF_STOCK.isEnabled() && !isAdminShop() && !hasStock();
     }
 
     private static boolean containsItems(Inventory inventory, List<ItemStack> items) {
@@ -409,7 +443,8 @@ public class ItemShop implements ConfigurationSerializable {
 
     public void setProducts(List<ItemStack> products) {
         this.products = products;
-        if (display != null) display.update();
+        // Restore the real shop block before rebuilding displays (avoid spawning displays while still bedrock).
+        refreshOutOfStockAppearance();
     }
 
     public void setColor(MenuColor color) {
@@ -614,6 +649,59 @@ public class ItemShop implements ConfigurationSerializable {
         return removed;
     }
 
+    /**
+     * Items matching {@code template} across internal stock list and all connected stockpiles.
+     */
+    public int countTotalStockMatching(ItemStack template) {
+        int n = countMatchingDisplayName(stockContents, template);
+        for (Location loc : stockpiles) {
+            Inventory inv = getInventoryFromLocation(loc);
+            if (inv != null) {
+                n += countMatchingDisplayName(inv, template);
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Per product line: available units / units required for one sale. Returns the minimum ratio (bottleneck).
+     * Merges listing lines by {@link #stockLineKey(ItemStack)} so ratio matches how {@link #countMatchingDisplayName} counts stock
+     * (HashMap&lt;ItemStack&gt; keys often never merge because stacks are different instances).
+     */
+    public double getMinimumStockFulfillmentRatio() {
+        if (products == null || products.isEmpty()) {
+            return 1.0;
+        }
+        Map<String, Integer> requiredByLine = new HashMap<>();
+        Map<String, ItemStack> templateByLine = new HashMap<>();
+        for (ItemStack line : products) {
+            if (line == null) {
+                continue;
+            }
+            String key = stockLineKey(line);
+            requiredByLine.merge(key, line.getAmount(), Integer::sum);
+            templateByLine.putIfAbsent(key, line.clone());
+        }
+        double min = Double.MAX_VALUE;
+        for (Map.Entry<String, Integer> entry : requiredByLine.entrySet()) {
+            ItemStack template = templateByLine.get(entry.getKey());
+            if (template == null) {
+                continue;
+            }
+            int required = Math.max(1, entry.getValue());
+            int available = countTotalStockMatching(template);
+            min = Math.min(min, (double) available / (double) required);
+        }
+        return min == Double.MAX_VALUE ? 1.0 : min;
+    }
+
+    /**
+     * Groups product requirements the same way {@link #countMatchingDisplayName} matches stacks (type + display name).
+     */
+    private static String stockLineKey(ItemStack item) {
+        return item.getType().name() + "\0" + getDisplayName(item);
+    }
+
     public long getStockRevision() {
         return stockRevision;
     }
@@ -622,6 +710,128 @@ public class ItemShop implements ConfigurationSerializable {
         stockRevision++;
         if (NormalShops.getInstance() != null && NormalShops.getInstance().getStockChestManager() != null) {
             NormalShops.getInstance().getStockChestManager().onShopStockMutated(this);
+        }
+        refreshOutOfStockAppearance();
+        scheduleLowStockHintRefresh();
+    }
+
+    private void scheduleLowStockHintRefresh() {
+        if (NormalShops.getInstance() == null) {
+            return;
+        }
+        Runnable run = () -> {
+            if (display != null) {
+                display.refreshLowStockHint();
+            }
+        };
+        if (Bukkit.isPrimaryThread()) {
+            run.run();
+        } else {
+            Bukkit.getScheduler().runTask(NormalShops.getInstance(), run);
+        }
+    }
+
+    @Nullable
+    public Material getContainerMaterial() {
+        return containerMaterial;
+    }
+
+    /**
+     * Updates shop block + holograms when {@link Setting#DISPLAY_OUT_OF_STOCK} applies.
+     * Safe to call from the main thread only (schedules async callers).
+     */
+    public void refreshOutOfStockAppearance() {
+        if (NormalShops.getInstance() == null) {
+            return;
+        }
+        if (Bukkit.isPrimaryThread()) {
+            refreshOutOfStockAppearanceSync();
+        } else {
+            Bukkit.getScheduler().runTask(NormalShops.getInstance(), this::refreshOutOfStockAppearanceSync);
+        }
+    }
+
+    private void refreshOutOfStockAppearanceSync() {
+        if (deleted) {
+            return;
+        }
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        if (!Setting.DISPLAY_OUT_OF_STOCK.isEnabled()) {
+            restoreShopBlockFromBedrockPlaceholder();
+            if (display != null) {
+                display.applyOutOfStockVisual(false);
+                display.update();
+            }
+            return;
+        }
+        if (isAdminShop()) {
+            restoreShopBlockFromBedrockPlaceholder();
+            if (display != null) {
+                display.applyOutOfStockVisual(false);
+                display.update();
+            }
+            return;
+        }
+        boolean out = !hasStock();
+        Block block = location.getBlock();
+        if (out) {
+            if (block.getType() != Material.BEDROCK) {
+                containerMaterial = block.getType();
+                saveData();
+            } else if (containerMaterial == null) {
+                ensureContainerMaterialInitialized();
+            }
+            block.setType(Material.BEDROCK);
+            if (display == null && !isAdminShop()) {
+                setDisplay(new HintOnlyDisplay(this));
+            }
+            if (display != null) {
+                display.applyOutOfStockVisual(true);
+                display.refreshLowStockHint();
+            }
+        } else {
+            restoreShopBlockFromBedrockPlaceholder();
+            if (display instanceof HintOnlyDisplay) {
+                display.clear();
+                this.display = null;
+                saveData();
+            } else if (display != null) {
+                display.applyOutOfStockVisual(false);
+                display.update();
+            }
+        }
+    }
+
+    private void ensureContainerMaterialInitialized() {
+        if (containerMaterial != null) {
+            return;
+        }
+        Block block = location.getBlock();
+        Material t = block.getType();
+        if (t == Material.BEDROCK || t == Material.AIR || t == Material.CAVE_AIR || t == Material.VOID_AIR) {
+            containerMaterial = Material.CHEST;
+        } else {
+            containerMaterial = t;
+        }
+        saveData();
+    }
+
+    private void restoreShopBlockFromBedrockPlaceholder() {
+        if (location.getWorld() == null) {
+            return;
+        }
+        if (containerMaterial == null) {
+            ensureContainerMaterialInitialized();
+        }
+        if (containerMaterial == null) {
+            return;
+        }
+        Block block = location.getBlock();
+        if (block.getType() == Material.BEDROCK) {
+            block.setType(containerMaterial);
         }
     }
 

@@ -1,3 +1,6 @@
+# Managed by NormalShops — messages-version is bumped when the plugin adds keys; missing keys are merged from the jar on startup.
+messages-version: 2
+
 # General
 update: "&eNormalShops: &a&lNeue Version verfügbar."
 no-permission: "Du bist nicht berechtigt, das zu tun."
@@ -19,6 +22,14 @@ stockpile-no-hopper: "Du kannst keine Items von dieser Lagertruhe herausnehmen."
 
 break-confirm: "Um deinen Shop zu entfernen, benutze:\n&e- &2&lPreis & Produkte Ändern &6→ &c&lShop Löschen."
 break-operator-confirm: "Um diesen Shop zu entfernen, &lShift + Rechtsklick &eauf den Shop und klicke: &c&lShop Löschen."
+
+command-delete-look-nothing: "Kein Block in Reichweite — schaue auf einen Shopblock (max. &e12 &7Blöcke)."
+command-delete-look-not-shop: "Dieser Block ist kein registrierter Shop."
+
+command-restore-no-backup: "Kein archivierter Shop für den Block, auf dem du stehst."
+command-restore-block-invalid: "Schaue auf eine &eeinzelne Truhe &7oder ein &eFass &7(keine Doppeltruhe, max. &e12 &7Blöcke)."
+command-restore-already-shop: "An diesem Block gibt es bereits einen aktiven Shop."
+command-restore-success: "Shop wiederhergestellt für &l{owner}&a bei &f{location}&a."
 
 shop-limit: "Shoplimit pro Spieler erreicht: &6&l{limit}"
 pile-limit: "Gewinntruhelimit pro Spieler erreicht: &6&l{limit}"

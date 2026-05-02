@@ -1,4 +1,4 @@
-# Managed by NormalShops — messages-version is bumped when the plugin adds keys; missing keys are merged from the jar on startup.
+# tr_TR (Turkish) — currently English text; translate in place. Same merge rules as other bundled locales.
 messages-version: 2
 
 # General

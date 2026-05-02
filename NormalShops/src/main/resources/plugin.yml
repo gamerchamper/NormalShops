@@ -44,8 +44,11 @@ permissions:
   normalshops.reload:
     description: Allows reloading NormalShops config and messages.
     default: op
+  normalshops.restore:
+    description: Restore a shop from shop-backups.yml onto the block you stand on.
+    default: op
 commands:
   normalshops:
     description: Main NormalShops command
     aliases: [ nshops ]
-    usage: /<command> reload
+    usage: /<command> reload | /<command> delete | /<command> restore

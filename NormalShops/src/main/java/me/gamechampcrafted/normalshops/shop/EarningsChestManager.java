@@ -28,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EarningsChestManager implements Listener {
 
     private static final int PAGE_SIZE = 45;
+    private static final int BOTTOM_ROW_FIRST = 45;
+    private static final int BOTTOM_ROW_LAST = 53;
     private static final int PREV_SLOT = 45;
     private static final int INFO_SLOT = 48;
     private static final int BACK_SLOT = 49;
@@ -42,6 +44,14 @@ public class EarningsChestManager implements Listener {
         }
         if (hasActiveViewersForShopByOther(shop, player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "Earnings chest is already in use.");
+            return;
+        }
+        if (NormalShops.getInstance().getStockChestManager().hasActiveStockViewersForShopByOther(shop, player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "This shop's stock is being viewed by another player.");
+            return;
+        }
+        if (NormalShops.getInstance().getTradingMenuManager().hasActiveSessionForShopByOther(shop, player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "Shop is currently in use by another buyer.");
             return;
         }
         Session session = new Session(player.getUniqueId(), shop);
@@ -66,6 +76,7 @@ public class EarningsChestManager implements Listener {
         inventory.setItem(INFO_SLOT, createNavItem(Material.GOLD_INGOT, ChatColor.GOLD + "Page " + (session.page + 1)));
         inventory.setItem(BACK_SLOT, createNavItem(Material.FLOWER_BANNER_PATTERN, ChatColor.WHITE + "Back"));
         inventory.setItem(NEXT_SLOT, createNavItem(Material.ARROW, ChatColor.YELLOW + "Next Page"));
+        fillBottomRowGlass(inventory);
         session.inventory = inventory;
         player.openInventory(inventory);
     }
@@ -84,6 +95,32 @@ public class EarningsChestManager implements Listener {
         return item;
     }
 
+    private static boolean isBottomRowNavSlot(int slot) {
+        return slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT;
+    }
+
+    private void fillBottomRowGlass(Inventory inventory) {
+        ItemStack pane = createBottomRowFillerPane();
+        for (int slot = BOTTOM_ROW_FIRST; slot <= BOTTOM_ROW_LAST; slot++) {
+            if (isBottomRowNavSlot(slot)) continue;
+            inventory.setItem(slot, pane.clone());
+        }
+    }
+
+    private static ItemStack createBottomRowFillerPane() {
+        ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta meta = pane.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(" ");
+            pane.setItemMeta(meta);
+        }
+        return pane;
+    }
+
+    private static boolean isBottomRowGlassSlot(int slot) {
+        return slot >= BOTTOM_ROW_FIRST && slot <= BOTTOM_ROW_LAST && !isBottomRowNavSlot(slot);
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
@@ -98,6 +135,10 @@ public class EarningsChestManager implements Listener {
         }
 
         int rawSlot = event.getRawSlot();
+        if (isBottomRowGlassSlot(rawSlot)) {
+            event.setCancelled(true);
+            return;
+        }
         if (rawSlot == PREV_SLOT || rawSlot == NEXT_SLOT || rawSlot == INFO_SLOT || rawSlot == BACK_SLOT) {
             event.setCancelled(true);
             if (rawSlot == INFO_SLOT) return;
@@ -133,7 +174,8 @@ public class EarningsChestManager implements Listener {
         Session session = sessions.get(event.getWhoClicked().getUniqueId());
         if (session == null || event.getInventory() != session.inventory) return;
         for (int slot : event.getRawSlots()) {
-            if (slot < PAGE_SIZE || slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT) {
+            if (slot < PAGE_SIZE || isBottomRowGlassSlot(slot)
+                    || slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT) {
                 event.setCancelled(true);
                 return;
             }

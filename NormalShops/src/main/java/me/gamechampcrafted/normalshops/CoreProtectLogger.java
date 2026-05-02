@@ -221,43 +221,18 @@ public class CoreProtectLogger {
                 "Disconnected " + type + " at " + formatLocation(targetLocation));
     }
 
+    /**
+     * Shop history shown in the admin GUI: NormalShops-persisted entries only (no CoreProtect block lookup).
+     * {@code lookbackSeconds} is retained for API compatibility and ignored.
+     */
     public static List<HistoryEntry> getShopHistory(Location location, int lookbackSeconds) {
-        List<HistoryEntry> detailedEntries = getPersistentHistory(location);
-        if (!detailedEntries.isEmpty()) {
-            return detailedEntries;
-        }
-        if (api == null || location.getWorld() == null) {
-            return detailedEntries;
-        }
-        try {
-            List<String[]> results = api.blockLookup(location.getBlock(), lookbackSeconds);
-            if (results == null) {
-                return Collections.emptyList();
-            }
-            List<HistoryEntry> entries = new ArrayList<>();
-            for (String[] result : results) {
-                CoreProtectAPI.ParseResult parsed = api.parseResult(result);
-                if (parsed == null) continue;
-                if (!location.getWorld().getName().equals(parsed.worldName())) continue;
-                if (parsed.getX() != location.getBlockX()
-                        || parsed.getY() != location.getBlockY()
-                        || parsed.getZ() != location.getBlockZ()) {
-                    continue;
-                }
-                entries.add(new HistoryEntry(
-                        parsed.getTimestamp(),
-                        parsed.getPlayer(),
-                        parsed.getActionString(),
-                        parsed.getType() == null ? "unknown" : parsed.getType().name(),
-                        ""
-                ));
-            }
-            entries.sort(Comparator.comparingLong(HistoryEntry::timestamp).reversed());
-            return entries;
-        } catch (Exception exception) {
-            Logger.warning("CoreProtect history lookup failed: " + exception.getMessage());
-            return Collections.emptyList();
-        }
+        return getPersistentHistory(location).stream()
+                .filter(CoreProtectLogger::includeInShopHistoryGui)
+                .collect(Collectors.toList());
+    }
+
+    private static boolean includeInShopHistoryGui(HistoryEntry entry) {
+        return !("SHOP_EDIT".equals(entry.action()) && "opened buy menu".equals(entry.details()));
     }
 
     private static void logInteraction(Player player, Location location, String message) {

@@ -49,6 +49,17 @@ public class ShopManager implements ConfigurationSerializable {
         uuidMap.put(shop.getLocation(), ownerUUID);
         saveData(ownerUUID);
         save();
+        shop.refreshOutOfStockAppearance();
+    }
+
+    /** Re-applies {@link Setting#DISPLAY_OUT_OF_STOCK} visuals for every loaded shop (e.g. after reload). */
+    public void refreshAllOutOfStockDisplays() {
+        Set<UUID> owners = new HashSet<>(uuidMap.values());
+        for (UUID ownerUUID : owners) {
+            for (ItemShop shop : getShopManager(ownerUUID).getShops()) {
+                shop.refreshOutOfStockAppearance();
+            }
+        }
     }
 
     public void registerPile(Pile pile) {
@@ -116,13 +127,21 @@ public class ShopManager implements ConfigurationSerializable {
                 shop.getLifetimeStockAdded(),
                 shop.getLifetimeStockRemoved(),
                 shop.getLifetimeImpressions(),
-                shop.getHistoryEntries()
+                shop.getHistoryEntries(),
+                shop.getContainerMaterial()
         );
         if (transferredShop.getDisplay() != null) {
             transferredShop.getDisplay().setShop(transferredShop);
         }
+        NormalShops plugin = NormalShops.getInstance();
+        if (plugin != null && plugin.getShopBackupService() != null) {
+            plugin.getShopBackupService().recordRemoval(shop);
+        }
         unregisterShop(shop);
         registerShop(transferredShop);
+        if (transferredShop.getDisplay() != null) {
+            transferredShop.updateDisplay();
+        }
         transferredShop.getStockpileSet().forEach(location ->
                 registerStockpileAt(newOwnerUUID, ItemShop.getStockpileSides(location)));
 
@@ -224,8 +243,9 @@ public class ShopManager implements ConfigurationSerializable {
         try {
             dataManager = new YAMLDataManager(
                     NormalShops.getInstance(),
-                    new File(NormalShops.getInstance().getDataFolder(), "shops"),
-                    ownerUUID.toString()
+                    new File(NormalShops.getInstance().getResolvedDataFolder(), "shops"),
+                    ownerUUID.toString(),
+                    NormalShops.getInstance().getResolvedDataFolder()
             );
             dataManagerMap.put(ownerUUID, dataManager);
             return dataManager;
@@ -277,7 +297,7 @@ public class ShopManager implements ConfigurationSerializable {
     }
 
     public void recoverAllManagers() {
-        File folder = new File(NormalShops.getInstance().getDataFolder(), "shops");
+        File folder = new File(NormalShops.getInstance().getResolvedDataFolder(), "shops");
         for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
             UUID uuid = player.getUniqueId();
             File file = new File(folder, uuid + ".yml");

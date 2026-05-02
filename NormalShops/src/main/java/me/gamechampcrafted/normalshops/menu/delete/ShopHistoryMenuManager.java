@@ -1,7 +1,6 @@
 package me.gamechampcrafted.normalshops.menu.delete;
 
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
-import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -39,19 +38,11 @@ public class ShopHistoryMenuManager implements Listener {
     private final Map<UUID, Session> sessions = new HashMap<>();
 
     public void open(Player player, ItemShop shop) {
-        if (!CoreProtectLogger.isAvailable()) {
-            player.sendMessage(ChatColor.RED + "CoreProtect is not available.");
-            return;
-        }
-        player.sendMessage(ChatColor.YELLOW + "Loading shop history...");
-        Bukkit.getScheduler().runTaskAsynchronously(NormalShops.getInstance(), () -> {
-            List<CoreProtectLogger.HistoryEntry> entries = CoreProtectLogger.getShopHistory(shop.getLocation(), 60 * 60 * 24 * 30);
-            Bukkit.getScheduler().runTask(NormalShops.getInstance(), () -> {
-                Session session = new Session(shop, entries);
-                sessions.put(player.getUniqueId(), session);
-                openPage(player, session, 0);
-            });
-        });
+        List<CoreProtectLogger.HistoryEntry> entries =
+                CoreProtectLogger.getShopHistory(shop.getLocation(), 60 * 60 * 24 * 30);
+        Session session = new Session(shop, entries);
+        sessions.put(player.getUniqueId(), session);
+        openPage(player, session, 0);
     }
 
     private void openPage(Player player, Session session, int page) {

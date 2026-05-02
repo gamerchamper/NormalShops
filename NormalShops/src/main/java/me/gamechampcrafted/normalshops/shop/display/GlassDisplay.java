@@ -42,6 +42,18 @@ public class GlassDisplay extends ShopDisplay {
     private UUID itemUUID;
     private UUID textUUID;
 
+    /** Plain sale line (persisted); entities are torn down during out-of-stock visuals and rebuilt from this. */
+    @Nullable
+    private String saleTextMessage;
+
+    /** Custom glass block for the display shell; {@code null} means {@link #DEFAULT_GLASS}. */
+    @Nullable
+    private Material persistedGlassMaterial;
+
+    /** Custom base/plinth block; {@code null} means {@link #DEFAULT_BASE}. */
+    @Nullable
+    private Material persistedBaseMaterial;
+
     public GlassDisplay(ItemShop shop) throws IllegalArgumentException {
         super(shop, ShopDisplayType.GLASS);
         Location location = shop.getLocation();
@@ -52,29 +64,39 @@ public class GlassDisplay extends ShopDisplay {
         }
     }
 
-    private GlassDisplay(UUID glassUUID, UUID baseUUID, UUID itemUUID, UUID textUUID) {
+    private GlassDisplay(
+            UUID glassUUID,
+            UUID baseUUID,
+            UUID itemUUID,
+            UUID textUUID,
+            @Nullable String saleTextMessage,
+            @Nullable Material persistedGlassMaterial,
+            @Nullable Material persistedBaseMaterial
+    ) {
         super(null, ShopDisplayType.GLASS);
         this.glassUUID = glassUUID;
         this.baseUUID = baseUUID;
         this.itemUUID = itemUUID;
         this.textUUID = textUUID;
+        this.saleTextMessage = saleTextMessage;
+        this.persistedGlassMaterial = persistedGlassMaterial;
+        this.persistedBaseMaterial = persistedBaseMaterial;
     }
 
     @Override
     protected void updateDisplay() {
         boolean isChest = getShop().getLocation().getBlock().getType() == Material.CHEST;
 
-        // Update transformations
+        Material glassMat = effectiveGlassMaterial();
+        Material baseMat = effectiveBaseMaterial();
+
         BlockDisplay glass = getBlockDisplay(glassUUID);
         glass.setTransformation(getGlassTransformation(isChest));
-        if (glass.getBlock().getMaterial() == Material.AIR) {
-            glass.setBlock(DEFAULT_GLASS.createBlockData());
-        }
+        glass.setBlock(glassMat.createBlockData());
+
         BlockDisplay base = getBlockDisplay(baseUUID);
         base.setTransformation(getGlassTransformation(isChest));
-        if (base.getBlock().getMaterial() == Material.AIR) {
-            base.setBlock(DEFAULT_BASE.createBlockData());
-        }
+        base.setBlock(baseMat.createBlockData());
         base.setTransformation(getBaseTransformation(isChest));
 
         ItemDisplay item = getItemDisplay(itemUUID);
@@ -83,6 +105,8 @@ public class GlassDisplay extends ShopDisplay {
 
         item.setItemStack(product);
         item.setBillboard(Display.Billboard.VERTICAL);
+
+        applySaleTextEntity();
     }
 
     @Override
@@ -92,12 +116,72 @@ public class GlassDisplay extends ShopDisplay {
         itemUUID = createItemDisplayIfNotExists(itemUUID).getUniqueId();
     }
 
+    @Override
+    public void applyOutOfStockVisual(boolean outOfStock) {
+        if (!outOfStock) {
+            return;
+        }
+        boolean migrated = false;
+        if (persistedGlassMaterial == null && glassUUID != null && exists(glassUUID)) {
+            Material m = getMaterial(glassUUID);
+            if (m != DEFAULT_GLASS) {
+                persistedGlassMaterial = m;
+                migrated = true;
+            }
+        }
+        if (persistedBaseMaterial == null && baseUUID != null && exists(baseUUID)) {
+            Material m = getMaterial(baseUUID);
+            if (m != DEFAULT_BASE) {
+                persistedBaseMaterial = m;
+                migrated = true;
+            }
+        }
+        if (migrated) {
+            getShop().saveData();
+        }
+        removeDisplayIfExists(itemUUID);
+        removeDisplayIfExists(textUUID);
+        removeDisplayIfExists(glassUUID);
+        removeDisplayIfExists(baseUUID);
+        itemUUID = null;
+        textUUID = null;
+        glassUUID = null;
+        baseUUID = null;
+    }
+
     public boolean hasSaleText() {
-        return textUUID != null;
+        return saleTextMessage != null && !saleTextMessage.isEmpty();
     }
 
     public void setSaleText(@Nullable String saleText) {
         if (saleText == null) {
+            saleTextMessage = null;
+            removeDisplayIfExists(textUUID);
+            textUUID = null;
+            getShop().saveData();
+            return;
+        }
+        saleTextMessage = saleText;
+        if (!shouldDeferSaleTextWhileOutOfStock()) {
+            applySaleTextEntity();
+        } else {
+            removeDisplayIfExists(textUUID);
+            textUUID = null;
+        }
+        getShop().saveData();
+    }
+
+    /** While the shop is in bedrock/out-of-stock storefront mode, keep the message but do not spawn the hologram. */
+    private boolean shouldDeferSaleTextWhileOutOfStock() {
+        return getShop().isBedrockOutOfStockStorefront();
+    }
+
+    /** Recreates the sale hologram from {@link #saleTextMessage} (used after restock or load). */
+    private void applySaleTextEntity() {
+        if (saleTextMessage == null || saleTextMessage.isEmpty()) {
+            return;
+        }
+        if (shouldDeferSaleTextWhileOutOfStock()) {
             removeDisplayIfExists(textUUID);
             textUUID = null;
             return;
@@ -105,12 +189,17 @@ public class GlassDisplay extends ShopDisplay {
         textUUID = createTextDisplayIfNotExists(textUUID).getUniqueId();
         TextDisplay text = getTextDisplay(textUUID);
         text.setTransformation(TEXT_TRANSFORMATION);
-        text.setText(Utils.rainbow(saleText, true));
+        text.setText(Utils.rainbow(saleTextMessage, true));
         text.setBillboard(Display.Billboard.VERTICAL);
+        text.setViewRange(1.0f);
     }
 
     @Override
     public void clear() {
+        clearLowStockHint();
+        saleTextMessage = null;
+        persistedGlassMaterial = null;
+        persistedBaseMaterial = null;
         Block above = getShop().getLocation().getBlock().getRelative(BlockFace.UP);
         if (above.getType() == Material.LIGHT) {
             above.setType(Material.AIR);
@@ -127,22 +216,40 @@ public class GlassDisplay extends ShopDisplay {
      */
     public boolean setGlassMaterial(Material material) {
         if (!GLASS_OPTIONS.contains(material)) return false;
+        persistedGlassMaterial = material;
         setMaterial(glassUUID, material);
+        getShop().saveData();
         return true;
     }
 
     public void setBaseMaterial(Material material) {
+        persistedBaseMaterial = material;
         setMaterial(baseUUID, material);
+        getShop().saveData();
     }
 
     public Material getGlassMaterial() {
+        if (persistedGlassMaterial != null) {
+            return persistedGlassMaterial;
+        }
         if (!exists(glassUUID)) return DEFAULT_GLASS;
         return getMaterial(glassUUID);
     }
 
     public Material getBaseMaterial() {
+        if (persistedBaseMaterial != null) {
+            return persistedBaseMaterial;
+        }
         if (!exists(baseUUID)) return DEFAULT_BASE;
         return getMaterial(baseUUID);
+    }
+
+    private Material effectiveGlassMaterial() {
+        return persistedGlassMaterial != null ? persistedGlassMaterial : DEFAULT_GLASS;
+    }
+
+    private Material effectiveBaseMaterial() {
+        return persistedBaseMaterial != null ? persistedBaseMaterial : DEFAULT_BASE;
     }
 
     private Material getMaterial(UUID uuid) {
@@ -200,11 +307,33 @@ public class GlassDisplay extends ShopDisplay {
         String base = (String) map.get("base");
         String item = (String) map.get("item");
         String text = (String) map.get("text");
+        String saleTextPersisted = (String) map.get("sale-text");
         UUID glassUUID = glass != null ? UUID.fromString(glass) : null;
         UUID baseUUID = base != null ? UUID.fromString(base) : null;
         UUID itemUUID = item != null ? UUID.fromString(item) : null;
         UUID textUUID = text != null ? UUID.fromString(text) : null;
-        return new GlassDisplay(glassUUID, baseUUID, itemUUID, textUUID);
+        GlassDisplay display = new GlassDisplay(
+                glassUUID,
+                baseUUID,
+                itemUUID,
+                textUUID,
+                saleTextPersisted,
+                parsePersistedMaterial((String) map.get("glass-material")),
+                parsePersistedMaterial((String) map.get("base-material"))
+        );
+        display.readStockHintFromMap(map);
+        return display;
+    }
+
+    private static @Nullable Material parsePersistedMaterial(@Nullable String name) {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        try {
+            return Material.valueOf(name.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     @Override
@@ -214,6 +343,10 @@ public class GlassDisplay extends ShopDisplay {
         if (baseUUID != null) map.put("base", baseUUID.toString());
         if (itemUUID != null) map.put("item", itemUUID.toString());
         if (textUUID != null) map.put("text", textUUID.toString());
+        if (saleTextMessage != null) map.put("sale-text", saleTextMessage);
+        if (persistedGlassMaterial != null) map.put("glass-material", persistedGlassMaterial.name());
+        if (persistedBaseMaterial != null) map.put("base-material", persistedBaseMaterial.name());
+        putStockHintIntoMap(map);
         return map;
     }
 }

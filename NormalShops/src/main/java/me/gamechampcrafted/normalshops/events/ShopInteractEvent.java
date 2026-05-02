@@ -54,7 +54,6 @@ public class ShopInteractEvent extends InteractEvent {
             new BuyMenu(player, shop).open();
             player.playSound(player, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, .5f, .8f);
         }
-        CoreProtectLogger.logShopEdit(player, shop.getLocation(), "opened buy menu");
         return true;
     }
 }

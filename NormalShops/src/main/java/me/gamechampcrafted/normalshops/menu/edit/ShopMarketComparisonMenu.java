@@ -23,6 +23,8 @@ import java.util.Set;
 
 public class ShopMarketComparisonMenu extends ShopMenu {
 
+    private static final int MAX_PRODUCT_LORE_LINES = 8;
+
     private static final List<Integer> LIST_SLOTS = List.of(
             10, 11, 12, 13, 14, 15, 16,
             19, 20, 21, 22, 23, 24, 25,
@@ -56,7 +58,7 @@ public class ShopMarketComparisonMenu extends ShopMenu {
         int end = Math.min(start + PAGE_SIZE, comparable.size());
 
         for (int i = start; i < end; i++) {
-            addButton(new CompetitorButton(LIST_SLOTS.get(i - start), comparable.get(i)));
+            addButton(new CompetitorButton(LIST_SLOTS.get(i - start), comparable.get(i), shop));
         }
 
         addButton(pageControl(40, Material.BOOK, "&bPage " + (currentPage + 1) + "/" + totalPages, null));
@@ -97,16 +99,41 @@ public class ShopMarketComparisonMenu extends ShopMenu {
             }
             if (matchedProducts.isEmpty()) continue;
 
+            int priceDeltaVsYours = candidate.getPrice().getAmount() - currentShop.getPrice().getAmount();
+            String customName = candidate.hasCustomName() ? candidate.getCustomName() : null;
+
             list.add(new ComparableShop(
                     candidate.getOwnerName() == null ? "unknown" : candidate.getOwnerName(),
                     candidate.getLocation(),
                     candidate.getPrice().getAmount(),
-                    Utils.getFormattedName(candidate.getPrice()),
+                    Utils.formatItemWithAmount(candidate.getPrice()),
                     candidate.getLifetimeSales(),
+                    candidate.getLifetimeRevenue(),
+                    candidate.getLifetimeProductsSold(),
+                    candidate.getLifetimeImpressions(),
+                    candidate.hasStock(),
+                    candidate.isAdminShop(),
+                    customName,
+                    distanceLabel(currentShop.getLocation(), candidate.getLocation()),
+                    priceDeltaVsYours,
                     new ArrayList<>(matchedProducts)
             ));
         }
         return list;
+    }
+
+    private static String distanceLabel(Location from, Location to) {
+        if (from.getWorld() == null || to.getWorld() == null) {
+            return "?";
+        }
+        if (!from.getWorld().equals(to.getWorld())) {
+            return "Other world";
+        }
+        double d = from.distance(to);
+        if (d >= 1000.0) {
+            return String.format(Locale.US, "%.1fk blocks", d / 1000.0);
+        }
+        return String.format(Locale.US, "%.0f blocks", d);
     }
 
     private String itemKey(ItemStack item) {
@@ -119,24 +146,80 @@ public class ShopMarketComparisonMenu extends ShopMenu {
 
     private static class CompetitorButton extends Button {
         private final ComparableShop data;
+        private final ItemShop referenceShop;
 
-        private CompetitorButton(int slot, ComparableShop data) {
+        private CompetitorButton(int slot, ComparableShop data, ItemShop referenceShop) {
             super(slot);
             this.data = data;
+            this.referenceShop = referenceShop;
         }
 
         @Override
         public ItemStack getItem() {
+            String title = (data.customName() != null && !data.customName().isBlank())
+                    ? "&f&l" + data.customName()
+                    : "&dCompetitor Shop";
+
             List<String> lore = new ArrayList<>();
             lore.add(Utils.colorize("&7Owner: &f" + data.ownerName()));
-            lore.add(Utils.colorize("&7Price: &e" + data.priceAmount() + " " + data.priceName()));
-            lore.add(Utils.colorize("&7Lifetime sales: &b" + data.lifetimeSales()));
-            lore.add(Utils.colorize("&7Location: &f" + Utils.formatLocation(data.location())));
-            lore.add(Utils.colorize("&7Matched products:"));
-            for (String product : data.matchedProducts()) {
-                lore.add(Utils.colorize("&8 - &7" + product));
+            if (data.adminShop()) {
+                lore.add(Utils.colorize("&bAdmin shop"));
             }
-            return createItem(Utils.colorize("&dCompetitor Shop"), lore, Material.PAPER, false);
+            lore.add(Utils.colorize("&7Price (per purchase): &e" + data.priceBundleFormatted()));
+            lore.add(Utils.colorize(priceDeltaLine(data.priceDeltaVsYours())));
+            lore.add(Utils.colorize("&7Lifetime revenue: &a" + fmt(data.lifetimeRevenue())));
+            lore.add(Utils.colorize("&7Sales (checkouts): &b" + fmt(data.lifetimeSales())));
+            lore.add(Utils.colorize("&7Units sold: &f" + fmt(data.lifetimeProductsSold())));
+            lore.add(Utils.colorize("&7Shop views: &d" + fmt(data.lifetimeImpressions())));
+            lore.add(Utils.colorize(stockStatusLine(data)));
+            lore.add(Utils.colorize("&7Distance: &f" + data.distanceLabel()));
+            lore.add(Utils.colorize("&7Your price: &e" + Utils.formatItemWithAmount(referenceShop.getPrice())));
+            lore.add(Utils.colorize("&7Their coords: &f" + Utils.formatLocation(data.location())));
+            lore.add(Utils.colorize("&8 "));
+            lore.add(Utils.colorize("&7Overlapping products:"));
+            List<String> products = data.matchedProducts();
+            int shown = Math.min(MAX_PRODUCT_LORE_LINES, products.size());
+            for (int i = 0; i < shown; i++) {
+                lore.add(Utils.colorize("&8 - &7" + products.get(i)));
+            }
+            if (products.size() > MAX_PRODUCT_LORE_LINES) {
+                int more = products.size() - MAX_PRODUCT_LORE_LINES;
+                lore.add(Utils.colorize("&8 - &7... +" + more + " more"));
+            }
+
+            Material icon = pickIcon(data);
+            return createItem(Utils.colorize(title), lore, icon, false);
+        }
+
+        private static String priceDeltaLine(int delta) {
+            if (delta == 0) {
+                return "&7vs your price: &eSame bundle cost";
+            }
+            int abs = Math.abs(delta);
+            if (delta < 0) {
+                return "&7vs your price: &aThey charge &f" + fmt(abs) + " &aless per bundle";
+            }
+            return "&7vs your price: &cThey charge &f" + fmt(abs) + " &cmore per bundle";
+        }
+
+        private static String stockStatusLine(ComparableShop data) {
+            if (data.adminShop()) {
+                return "&7Stock: &bUnlimited (admin)";
+            }
+            return data.hasStock()
+                    ? "&7Stock: &aIn stock"
+                    : "&7Stock: &cOut of stock";
+        }
+
+        private static Material pickIcon(ComparableShop data) {
+            if (data.adminShop()) {
+                return Material.NETHER_STAR;
+            }
+            return data.hasStock() ? Material.LIME_CONCRETE : Material.RED_CONCRETE;
+        }
+
+        private static String fmt(long value) {
+            return String.format(Locale.US, "%,d", value);
         }
 
         @Override
@@ -166,8 +249,16 @@ public class ShopMarketComparisonMenu extends ShopMenu {
             String ownerName,
             Location location,
             int priceAmount,
-            String priceName,
+            String priceBundleFormatted,
             long lifetimeSales,
+            long lifetimeRevenue,
+            long lifetimeProductsSold,
+            long lifetimeImpressions,
+            boolean hasStock,
+            boolean adminShop,
+            String customName,
+            String distanceLabel,
+            int priceDeltaVsYours,
             List<String> matchedProducts
     ) {
     }

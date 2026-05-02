@@ -2,10 +2,10 @@
 # NormalShops settings
 # NOTE: RELOAD/RESTART SERVER FOR CHANGES TO TAKE EFFECT
 #########################################################
-config-version: 1
-messages-version: 1
+config-version: 3
 
-# Currently supported languages: en_US, de_DE, tr_TR
+# Supported languages: plugins/…/messages/<locale>.yml — bundled locales merge new keys from the jar when outdated.
+# Currently bundled in the jar: en_US, de_DE, tr_TR. Other codes get a new file seeded from English.
 language: en_US
 
 # Whether to check for updates on server startup.
@@ -20,6 +20,11 @@ protect-stockpiles: true
 # Impacts the visibility range of shop displays.
 # Default: 2
 display-view-range: 2
+
+# When true, a shop with no sellable stock shows as BEDROCK and hides the item display
+# and sale text (glass display) until it has stock again. The original block type is stored
+# and restored automatically. Admins with unlimited/special stock are unaffected.
+display-out-of-stock: false
 
 # If this setting is enabled, earnings at a shop will be collected by the deleter
 # when someone with the permission "normalshops.delete" deletes the shop.
@@ -44,6 +49,12 @@ shop-limit-per-earnings-pile: 10
 # there is a block again. This setting *might* cause lag if you have a lot of pistons running in your server.
 block-piston: true
 
+# Stricter item matching (full NBT). Useful on economy servers with heavily customized items.
+full-nbt-check: false
+
+# If true, buyers use the villager/merchant trade UI; if false, the classic buy GUI.
+villager-trading-menu: true
+
 # WARNING: DO NOT TURN THIS SETTING ON UNLESS YOU KNOW WHAT YOU'RE DOING!
 # This is used for resynchronizing the "data.yml" file and the files in the "shops" folder.
 # Only use this in extreme situations where the data.yml file is corrupted.
@@ -51,9 +62,10 @@ block-piston: true
 # RESTART ONCE AFTER RUNNING THE SERVER WITH THIS SETTING ON.
 recover-shop-files: false
 
-# TOGGLES
-villager-trading-menu: true
+# ─── Automatic shop data snapshots (data.yml, shops/*.yml, shop-backups.yml) ───
+# Saves go to plugins/…/backups/auto/<yyyy-MM-dd_HH-mm-ss>/ using parallel file copies after a main-thread save.
+auto-data-backup-enabled: true
+auto-data-backup-interval-minutes: 10
+auto-data-backup-max-snapshots: 48
 
-# Allows trading items with slightly different NBT data, example addon lores.
-full-nbt-check: false
 

@@ -3,7 +3,14 @@ package me.gamechampcrafted.normalshops.data;
 import me.gamechampcrafted.normalshops.Logger;
 import me.gamechampcrafted.normalshops.NormalShops;
 
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public enum Setting {
     CONFIG_VERSION(0),
@@ -30,7 +37,21 @@ public enum Setting {
 
     VILLAGER_TRADING_MENU(true),
 
-    RECOVER_SHOP_FILES(false);
+    /**
+     * When true, empty shops show as bedrock and hide item/sale displays until restocked.
+     */
+    DISPLAY_OUT_OF_STOCK(false),
+
+    RECOVER_SHOP_FILES(false),
+
+    /** Copies {@code data.yml}, {@code shops/*.yml}, and {@code shop-backups.yml} on a timer (see {@code backups/auto/}). */
+    AUTO_DATA_BACKUP_ENABLED(true),
+
+    /** Minutes between snapshots (1–1440). */
+    AUTO_DATA_BACKUP_INTERVAL_MINUTES(10),
+
+    /** Number of timestamp folders under {@code backups/auto/} to retain. */
+    AUTO_DATA_BACKUP_MAX_SNAPSHOTS(48);
 
     private static SettingManager manager;
     private final Object defaultValue;
@@ -41,12 +62,12 @@ public enum Setting {
 
     public static void initialize() throws IOException {
         if (manager == null) {
-            manager = new SettingManager(NormalShops.getInstance());
+            manager = new SettingManager(NormalShops.getInstance(), NormalShops.getInstance().getResolvedDataFolder());
         }
     }
 
     public static void reload() throws IOException {
-        manager = new SettingManager(NormalShops.getInstance());
+        manager = new SettingManager(NormalShops.getInstance(), NormalShops.getInstance().getResolvedDataFolder());
     }
 
     public static void saveSettings() {
@@ -65,6 +86,7 @@ public enum Setting {
         manager.set(getPath(), object);
     }
 
+    /** Used for string settings only; booleans and ints use {@link FileConfiguration} helpers. */
     private <T> T get(Class<T> type) {
         Object value = null;
         if (manager != null) {
@@ -72,15 +94,116 @@ public enum Setting {
         } else {
             Logger.severe("SettingManager is null.");
         }
-        if (!type.isInstance(value)) {
-            Logger.warning("Invalid value for \"" + getPath() + "\" in config.yml. Default value " + defaultValue + " is used instead.");
-            value = defaultValue;
+        Object coerced = coerce(value, type);
+        if (coerced != null && type.isInstance(coerced)) {
+            return type.cast(coerced);
         }
-        return type.cast(value);
+        return type.cast(defaultValue);
+    }
+
+    /**
+     * Legacy configs and YAML edge cases may yield strings for booleans or doubles for integers.
+     */
+    private static Object coerce(Object value, Class<?> type) {
+        if (value == null) {
+            return null;
+        }
+        if (type == Boolean.class) {
+            if (value instanceof Boolean) {
+                return value;
+            }
+            if (value instanceof String) {
+                String s = ((String) value).trim().toLowerCase(Locale.ROOT);
+                if (s.isEmpty()) {
+                    return null;
+                }
+                if ("true".equals(s) || "yes".equals(s) || "on".equals(s) || "1".equals(s)) {
+                    return Boolean.TRUE;
+                }
+                if ("false".equals(s) || "no".equals(s) || "off".equals(s) || "0".equals(s)) {
+                    return Boolean.FALSE;
+                }
+                return null;
+            }
+            if (value instanceof Character) {
+                char c = (Character) value;
+                if (c == '1' || c == 'y' || c == 'Y' || c == 't' || c == 'T') {
+                    return Boolean.TRUE;
+                }
+                if (c == '0' || c == 'n' || c == 'N' || c == 'f' || c == 'F') {
+                    return Boolean.FALSE;
+                }
+                return null;
+            }
+            if (value instanceof Number) {
+                return ((Number) value).doubleValue() != 0.0;
+            }
+            if (value instanceof List<?>) {
+                List<?> list = (List<?>) value;
+                if (list.size() == 1) {
+                    return coerce(list.get(0), type);
+                }
+                return null;
+            }
+            if (value instanceof ConfigurationSection) {
+                ConfigurationSection sec = (ConfigurationSection) value;
+                Set<String> keys = sec.getKeys(false);
+                if (keys.size() == 1) {
+                    return coerce(sec.get(keys.iterator().next()), type);
+                }
+                return null;
+            }
+            if (value instanceof Map<?, ?>) {
+                Map<?, ?> map = (Map<?, ?>) value;
+                if (map.size() == 1) {
+                    return coerce(map.values().iterator().next(), type);
+                }
+                return null;
+            }
+            return null;
+        }
+        if (type == Integer.class) {
+            if (value instanceof Integer) {
+                return value;
+            }
+            if (value instanceof Number) {
+                return ((Number) value).intValue();
+            }
+            if (value instanceof String) {
+                try {
+                    return Integer.parseInt(((String) value).trim());
+                } catch (NumberFormatException ignored) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        if (type == String.class) {
+            if (value instanceof String) {
+                return value;
+            }
+            return String.valueOf(value);
+        }
+        return null;
     }
 
     public int getInt() {
-        return get(Integer.class);
+        if (manager == null) {
+            Logger.severe("SettingManager is null.");
+            return (Integer) defaultValue;
+        }
+        FileConfiguration cfg = manager.getDataManager().getConfig();
+        String path = getPath();
+        int def = (Integer) defaultValue;
+        if (!cfg.isSet(path)) {
+            return def;
+        }
+        Object raw = cfg.get(path);
+        Object coerced = coerce(raw, Integer.class);
+        if (coerced instanceof Integer) {
+            return (Integer) coerced;
+        }
+        return cfg.getInt(path, def);
     }
 
     public String getString() {
@@ -88,7 +211,22 @@ public enum Setting {
     }
 
     public boolean isEnabled() {
-        return get(Boolean.class);
+        if (manager == null) {
+            Logger.severe("SettingManager is null.");
+            return (Boolean) defaultValue;
+        }
+        FileConfiguration cfg = manager.getDataManager().getConfig();
+        String path = getPath();
+        boolean def = (Boolean) defaultValue;
+        if (!cfg.isSet(path)) {
+            return def;
+        }
+        Object raw = cfg.get(path);
+        Object coerced = coerce(raw, Boolean.class);
+        if (coerced instanceof Boolean) {
+            return (Boolean) coerced;
+        }
+        return cfg.getBoolean(path, def);
     }
 
     private String path;

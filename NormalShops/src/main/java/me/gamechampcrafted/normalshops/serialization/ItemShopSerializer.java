@@ -6,10 +6,14 @@ import me.gamechampcrafted.normalshops.shop.BuySound;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.shop.display.ShopDisplay;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static java.util.Locale.ROOT;
 
 public class ItemShopSerializer extends Serializer<ItemShop> {
 
@@ -56,15 +60,31 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
         long lifetimeImpressions = getLongOrDefault("lifetime-impressions", 0L);
         List<CoreProtectLogger.HistoryEntry> historyEntries = deserializeHistoryEntries();
 
+        Material containerMaterial = deserializeContainerMaterial();
+
         ItemShop shop = new ItemShop(
                 location, ownerUUID, price, products, earnings, stockpiles,
                 trustedPlayers,
                 stockContents, color, display, admin, customName, buySound,
                 notifications, stockWarning, lifetimeSales, lifetimeRevenue,
-                lifetimeProductsSold, lifetimeStockAdded, lifetimeStockRemoved, lifetimeImpressions, historyEntries
+                lifetimeProductsSold, lifetimeStockAdded, lifetimeStockRemoved, lifetimeImpressions, historyEntries,
+                containerMaterial
         );
         if (display != null) display.setShop(shop);
         return shop;
+    }
+
+    @Nullable
+    private Material deserializeContainerMaterial() {
+        Object raw = map.get("container-material");
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return Material.valueOf(String.valueOf(raw).trim().toUpperCase(ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private List<ItemStack> deserializeStockContents() {
@@ -162,6 +182,9 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
 
         if (shop.hasCustomName()) {
             map.put("name", shop.getCustomName());
+        }
+        if (shop.getContainerMaterial() != null) {
+            map.put("container-material", shop.getContainerMaterial().name());
         }
         return map;
     }

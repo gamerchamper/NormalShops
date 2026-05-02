@@ -5,6 +5,7 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 
 import static me.gamechampcrafted.normalshops.menu.Menu.EDITABLE_SLOTS;
@@ -63,13 +64,18 @@ public class ClickHandler {
         if (event.getClick() != ClickType.DOUBLE_CLICK) return false;
         if (event.getAction() != InventoryAction.COLLECT_TO_CURSOR) return false;
 
-        Inventory inv = event.getInventory();
+        InventoryView view = event.getView();
+        Inventory top = view.getTopInventory();
+        int topSize = top.getSize();
         ItemStack cursor = event.getCursor();
 
         if (cursor == null) return false;
 
         for (Integer slot : EDITABLE_SLOTS) {
-            ItemStack item = inv.getItem(slot);
+            if (slot < 0 || slot >= topSize) {
+                continue;
+            }
+            ItemStack item = top.getItem(slot);
             if (item != null && item.getType() == cursor.getType()) {
                 return true;
             }

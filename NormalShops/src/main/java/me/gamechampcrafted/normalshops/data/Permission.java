@@ -10,6 +10,7 @@ public enum Permission {
     EARNINGS_PILE,
     DISPLAY,
     DELETE,
+    RESTORE,
     SALE_TEXT,
     UNLIMITED_STOCK,
     BYPASS_STOCKPILE;

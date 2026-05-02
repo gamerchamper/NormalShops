@@ -44,6 +44,14 @@ public class FrameDisplay extends ShopDisplay {
     }
 
     @Override
+    public void applyOutOfStockVisual(boolean outOfStock) {
+        if (!outOfStock) {
+            return;
+        }
+        removeDisplayIfExists(itemUUID);
+    }
+
+    @Override
     public void updateDisplay() {
         ItemShop shop = getShop();
         Player player = Bukkit.getPlayer(shop.getOwnerUUID());
@@ -66,6 +74,7 @@ public class FrameDisplay extends ShopDisplay {
 
     @Override
     public void clear() {
+        clearLowStockHint();
         removeDisplayIfExists(topUUID);
         removeDisplayIfExists(bottomUUID);
         removeDisplayIfExists(itemUUID);
@@ -178,7 +187,9 @@ public class FrameDisplay extends ShopDisplay {
         UUID topUUID = top != null ? UUID.fromString(top) : null;
         UUID bottomUUID = bottom != null ? UUID.fromString(bottom) : null;
         UUID itemUUID = item != null ? UUID.fromString(item) : null;
-        return new FrameDisplay(topUUID, bottomUUID, itemUUID);
+        FrameDisplay display = new FrameDisplay(topUUID, bottomUUID, itemUUID);
+        display.readStockHintFromMap(map);
+        return display;
     }
 
     @Override
@@ -187,6 +198,7 @@ public class FrameDisplay extends ShopDisplay {
         if (topUUID != null) map.put("top", topUUID.toString());
         if (bottomUUID != null) map.put("bottom", bottomUUID.toString());
         if (itemUUID != null) map.put("item", itemUUID.toString());
+        putStockHintIntoMap(map);
         return map;
     }
 }

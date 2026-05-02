@@ -21,8 +21,8 @@ public class ShopHistoryButton extends ShopButton {
     @Override
     public ItemStack getItem() {
         List<String> lore = Arrays.asList(
-                Utils.colorize("&7View logged CoreProtect history"),
-                Utils.colorize("&7for this shop location.")
+                Utils.colorize("&7View this shop's activity log"),
+                Utils.colorize("&7(buys, edits, connections, …).")
         );
         return createItem(Utils.colorize("&b📜 &lSHOP HISTORY"), lore, Material.WRITABLE_BOOK, false);
     }

@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.data;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.utils.MessageParametizer;
 import me.gamechampcrafted.normalshops.utils.Parameterizer;
+import me.gamechampcrafted.normalshops.utils.Utils;
 import org.bukkit.command.CommandSender;
 
 import java.io.IOException;
@@ -27,6 +28,14 @@ public enum Message {
     COOLDOWN(MessageType.FAIL),
     BREAK_CONFIRM(MessageType.WARN),
     BREAK_OPERATOR_CONFIRM(MessageType.WARN),
+
+    COMMAND_DELETE_LOOK_NOTHING(MessageType.FAIL),
+    COMMAND_DELETE_LOOK_NOT_SHOP(MessageType.FAIL),
+
+    COMMAND_RESTORE_NO_BACKUP(MessageType.FAIL),
+    COMMAND_RESTORE_BLOCK_INVALID(MessageType.FAIL),
+    COMMAND_RESTORE_ALREADY_SHOP(MessageType.FAIL),
+    COMMAND_RESTORE_SUCCESS(MessageType.CONFIRM),
 
     STOCKPILE_NOT_OWNER(MessageType.FAIL),
     STOCKPILE_NO_BREAK(MessageType.FAIL),
@@ -203,13 +212,15 @@ public enum Message {
     public static void initialize() throws IOException {
         if (initialized) return;
         Setting.initialize(); // To access LANGUAGE settings
-        dataManager = new MessageManager(NormalShops.getInstance(), Setting.LANGUAGE.getString());
+        dataManager = new MessageManager(NormalShops.getInstance(), Setting.LANGUAGE.getString(),
+                NormalShops.getInstance().getResolvedDataFolder());
         initialized = true;
     }
 
     public static void reload() throws IOException {
         Setting.reload();
-        dataManager = new MessageManager(NormalShops.getInstance(), Setting.LANGUAGE.getString());
+        dataManager = new MessageManager(NormalShops.getInstance(), Setting.LANGUAGE.getString(),
+                NormalShops.getInstance().getResolvedDataFolder());
     }
 
     final MessageType type;
@@ -234,7 +245,14 @@ public enum Message {
 
     @Override
     public String toString() {
-        return dataManager.get(getPath());
+        if (dataManager == null) {
+            return name().replace('_', ' ');
+        }
+        String text = dataManager.get(getPath());
+        if (text != null) {
+            return text;
+        }
+        return Utils.colorize("&7" + getPath().replace('-', ' '));
     }
 
     public List<String> getLore() {

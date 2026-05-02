@@ -14,16 +14,27 @@ public class YAMLDataManager implements DataManager {
 
     private final Plugin plugin;
 
+    /** Prefix stripped from {@link #file} paths when copying defaults from the jar (often the plugin data root). */
+    private final File pathTrimBase;
+
     private final File file;
     private FileConfiguration config;
 
     public YAMLDataManager(Plugin plugin, @NotNull File directory, String fileName) throws IOException {
+        this(plugin, directory, fileName, plugin.getDataFolder());
+    }
+
+    /**
+     * @param pathTrimBase directory prefix used with {@link Plugin#saveResource(String, boolean)} path derivation (see {@link #getTrimmedPath()})
+     */
+    public YAMLDataManager(Plugin plugin, @NotNull File directory, String fileName, @NotNull File pathTrimBase) throws IOException {
         this.plugin = plugin;
+        this.pathTrimBase = pathTrimBase;
         createDirectoryIfNotExists(directory);
         file = new File(directory, fileName + ".yml");
 
         if (file.exists()) {
-            config = YamlConfiguration.loadConfiguration(file);
+            config = LegacySerializationYaml.loadConfiguration(file);
             return;
         }
 
@@ -37,7 +48,12 @@ public class YAMLDataManager implements DataManager {
 
     @Override
     public void reloadConfig() {
-        config = YamlConfiguration.loadConfiguration(file);
+        try {
+            config = LegacySerializationYaml.loadConfiguration(file);
+        } catch (IOException exception) {
+            plugin.getLogger().severe("Could not reload \"" + file.getName() + "\": " + exception.getMessage());
+            config = YamlConfiguration.loadConfiguration(file);
+        }
     }
 
     @Override
@@ -69,10 +85,10 @@ public class YAMLDataManager implements DataManager {
     }
 
     private String getTrimmedPath() {
-        String dataFolderPath = plugin.getDataFolder().getPath();
+        String basePath = pathTrimBase.getPath();
         String filePath = file.getPath();
-        if (filePath.startsWith(dataFolderPath)) {
-            return filePath.substring(dataFolderPath.length() + 1); //Trim plugin directory
+        if (filePath.startsWith(basePath)) {
+            return filePath.substring(basePath.length() + 1); // Trim plugin data root
         }
         return filePath;
     }

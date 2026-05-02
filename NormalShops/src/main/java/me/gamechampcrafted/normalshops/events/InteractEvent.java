@@ -26,10 +26,11 @@ public abstract class InteractEvent implements Listener {
         Block block = event.getClickedBlock();
         if (block == null) return;
 
-        // Return if player wants to place block
+        // Return if player wants to place block or hanging item frame (not covered by Material#isBlock)
         Player player = event.getPlayer();
         Material hand = player.getInventory().getItemInMainHand().getType();
-        if (player.isSneaking() && hand.isBlock() && hand != Material.AIR) {
+        if (player.isSneaking() && hand != Material.AIR
+                && (hand.isBlock() || hand == Material.ITEM_FRAME || hand == Material.GLOW_ITEM_FRAME)) {
             return;
         }
 

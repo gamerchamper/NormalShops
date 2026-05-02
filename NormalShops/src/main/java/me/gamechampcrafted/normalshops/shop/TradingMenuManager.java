@@ -46,7 +46,6 @@ public class TradingMenuManager implements Listener {
         }
         boolean outOfStock = !shop.hasStock();
         if (outOfStock) {
-            Message.BUY_NO_STOCK.send(player);
             MessageType.FAIL.playSound(player);
         }
         List<ItemStack> products = shop.getProducts();

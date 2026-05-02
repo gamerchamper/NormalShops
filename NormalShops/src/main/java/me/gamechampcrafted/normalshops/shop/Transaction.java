@@ -43,8 +43,6 @@ public class Transaction {
      */
     public boolean make() {
         if (!shop.hasStock()) {
-            //No stock
-            Message.BUY_NO_STOCK.send(buyer);
             buyer.closeInventory();
             return false;
         }

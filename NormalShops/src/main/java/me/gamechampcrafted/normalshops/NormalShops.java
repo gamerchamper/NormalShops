@@ -12,18 +12,23 @@ import me.gamechampcrafted.normalshops.menu.delete.ShopHistoryMenuManager;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.shop.Pile;
 import me.gamechampcrafted.normalshops.shop.PlayerShopManager;
+import me.gamechampcrafted.normalshops.shop.ShopBackupService;
 import me.gamechampcrafted.normalshops.shop.ShopManager;
 import me.gamechampcrafted.normalshops.shop.EarningsChestManager;
 import me.gamechampcrafted.normalshops.shop.StockChestManager;
+import me.gamechampcrafted.normalshops.backup.ShopDataAutoBackup;
 import me.gamechampcrafted.normalshops.shop.connector.ConnectorManager;
 import me.gamechampcrafted.normalshops.shop.display.FrameDisplay;
 import me.gamechampcrafted.normalshops.shop.display.GlassDisplay;
+import me.gamechampcrafted.normalshops.shop.display.HintOnlyDisplay;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.jetbrains.annotations.Nullable;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.io.IOException;
 
 public final class NormalShops extends JavaPlugin {
@@ -35,6 +40,7 @@ public final class NormalShops extends JavaPlugin {
         ConfigurationSerialization.registerClass(ShopManager.class, "ShopManager");
         ConfigurationSerialization.registerClass(FrameDisplay.class, "FrameDisplay");
         ConfigurationSerialization.registerClass(GlassDisplay.class, "GlassDisplay");
+        ConfigurationSerialization.registerClass(HintOnlyDisplay.class, "HintOnlyDisplay");
     }
 
     private static NormalShops plugin;
@@ -43,15 +49,47 @@ public final class NormalShops extends JavaPlugin {
         return plugin;
     }
 
+    /**
+     * All plugin YAML/config/backups should use this path: if {@code plugins/ClickShop} already exists
+     * (legacy ClickShop migration), it is used instead of {@link #getDataFolder()} ({@code plugins/NormalShops}).
+     */
+    public File getResolvedDataFolder() {
+        File defaultFolder = super.getDataFolder();
+        File pluginsDir = defaultFolder.getParentFile();
+        if (pluginsDir == null) {
+            return defaultFolder;
+        }
+        File legacy = new File(pluginsDir, "ClickShop");
+        if (legacy.exists() && legacy.isDirectory()) {
+            return legacy;
+        }
+        return defaultFolder;
+    }
+
     @Override
     public void onEnable() {
         plugin = this;
 
         loadData();
+        if (!isEnabled()) {
+            return;
+        }
+        shopDataAutoBackup = new ShopDataAutoBackup(this);
+        shopDataAutoBackup.schedule();
         initializeAllManagers();
         registerAllEvents();
         registerCommands();
         CoreProtectLogger.initialize();
+
+        Runnable refreshOutOfStockDisplays = () -> {
+            if (shopManager != null) {
+                shopManager.refreshAllOutOfStockDisplays();
+            }
+        };
+        // Immediate pass after managers exist; delayed passes catch shops whose chunks were not ready yet.
+        Bukkit.getScheduler().runTask(this, refreshOutOfStockDisplays);
+        Bukkit.getScheduler().runTaskLater(this, refreshOutOfStockDisplays, 20L);
+        Bukkit.getScheduler().runTaskLater(this, refreshOutOfStockDisplays, 100L);
 
         getLogger().info("NormalShops enabled.");
     }
@@ -64,6 +102,9 @@ public final class NormalShops extends JavaPlugin {
         if (stockChestManager != null) stockChestManager.closeAllSessions();
         if (earningsChestManager != null) earningsChestManager.closeAllSessions();
         if (shopHistoryMenuManager != null) shopHistoryMenuManager.closeAllSessions();
+        if (shopDataAutoBackup != null) {
+            shopDataAutoBackup.shutdown();
+        }
         saveData();
         getLogger().info("NormalShops disabled.");
     }
@@ -141,7 +182,11 @@ public final class NormalShops extends JavaPlugin {
         }
 
         try {
-            data = new YAMLDataManager(this, getDataFolder(), "data");
+            File dataRoot = getResolvedDataFolder();
+            if (!dataRoot.equals(getDataFolder())) {
+                getLogger().info("Using ClickShop data folder: " + dataRoot.getAbsolutePath());
+            }
+            data = new YAMLDataManager(this, dataRoot, "data", dataRoot);
         } catch (IOException exception) {
             getLogger().severe("Couldn't load data.yml! Disabling plugin...");
             getLogger().severe("Cause: " + exception.getMessage());
@@ -161,24 +206,52 @@ public final class NormalShops extends JavaPlugin {
             Setting.RECOVER_SHOP_FILES.set(false);
             Setting.saveSettings();
         }
+
+        try {
+            shopBackupService = new ShopBackupService(this);
+        } catch (IOException exception) {
+            getLogger().severe("Could not initialize shop-backups.yml — automatic backups are disabled.");
+            getLogger().severe("Cause: " + exception.getMessage());
+            exception.printStackTrace();
+            shopBackupService = null;
+        }
     }
 
     public void saveData() {
-        data.getConfig().set("shop-manager", shopManager);
+        if (data == null) {
+            return;
+        }
+        if (shopManager != null) {
+            data.getConfig().set("shop-manager", shopManager);
+            shopManager.saveAll();
+        }
         data.saveConfig();
-        shopManager.saveAll();
     }
 
     private ShopManager shopManager;
 
+    @Nullable
+    private ShopBackupService shopBackupService;
+
     public ShopManager getShopManager() {
         return shopManager;
+    }
+
+    @Nullable
+    public ShopBackupService getShopBackupService() {
+        return shopBackupService;
     }
 
     private ConnectorManager connectorManager;
 
     public ConnectorManager getConnectorManager() {
         return connectorManager;
+    }
+
+    private ShopDataAutoBackup shopDataAutoBackup;
+
+    public ShopDataAutoBackup getShopDataAutoBackup() {
+        return shopDataAutoBackup;
     }
 
     private MenuListener menuListener;

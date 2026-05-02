@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -47,7 +48,15 @@ public abstract class Menu {
         this.size = size;
         this.clickHandler = clickHandler;
         this.color = color;
-        this.title = title;
+        this.title = inventoryTitleOrFallback(title);
+    }
+
+    /** Bukkit 1.21+ rejects null (and some builds reject blank) custom inventory titles. */
+    private static String inventoryTitleOrFallback(String title) {
+        if (title != null && !title.isEmpty()) {
+            return title;
+        }
+        return ChatColor.DARK_GRAY + "Shop";
     }
 
     public void open() {
