@@ -61,6 +61,7 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
         List<CoreProtectLogger.HistoryEntry> historyEntries = deserializeHistoryEntries();
 
         Material containerMaterial = deserializeContainerMaterial();
+        @Nullable String containerBlockData = deserializeContainerBlockData();
 
         ItemShop shop = new ItemShop(
                 location, ownerUUID, price, products, earnings, stockpiles,
@@ -68,7 +69,8 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
                 stockContents, color, display, admin, customName, buySound,
                 notifications, stockWarning, lifetimeSales, lifetimeRevenue,
                 lifetimeProductsSold, lifetimeStockAdded, lifetimeStockRemoved, lifetimeImpressions, historyEntries,
-                containerMaterial
+                containerMaterial,
+                containerBlockData
         );
         if (display != null) display.setShop(shop);
         return shop;
@@ -85,6 +87,16 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    @Nullable
+    private String deserializeContainerBlockData() {
+        Object raw = map.get("container-block-data");
+        if (raw == null) {
+            return null;
+        }
+        String s = String.valueOf(raw).trim();
+        return s.isEmpty() ? null : s;
     }
 
     private List<ItemStack> deserializeStockContents() {
@@ -185,6 +197,9 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
         }
         if (shop.getContainerMaterial() != null) {
             map.put("container-material", shop.getContainerMaterial().name());
+        }
+        if (shop.getContainerBlockData() != null) {
+            map.put("container-block-data", shop.getContainerBlockData());
         }
         return map;
     }

@@ -22,7 +22,7 @@ public class MessageManager {
      * On startup (and reload), each locale file on disk is merged with the jar:
      * keys you added stay in the jar; missing keys are filled in without overwriting custom text.
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 4;
 
     private static final String DIRECTORY_NAME = "messages";
 

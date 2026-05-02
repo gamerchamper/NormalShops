@@ -1,6 +1,5 @@
 package me.gamechampcrafted.normalshops.events;
 
-import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Permission;
 import me.gamechampcrafted.normalshops.menu.pile.EarningsMenu;
@@ -27,19 +26,17 @@ public class PileInteractEvent extends InteractEvent {
         if (!player.isSneaking()) return false;
         if (block.getType() != Material.ENDER_CHEST && block.getType() != Material.CHEST && block.getType() != Material.BARREL) return false;
         if (ItemShop.get(block.getLocation()) != null) return false;
-        if (Permission.EARNINGS_PILE.lacksAndNotify(player)) {
-            return true;
-        }
         Location location = Pile.resolvePileLocation(block.getLocation());
         Pile pile = Pile.get(location);
         if (pile == null) {
-            if (Pile.isPileLimitReachedForAndWarn(player)) {
-                return true;
-            }
-            pile = new Pile(location, player);
-            CoreProtectLogger.logEarningsPileCreate(player, location);
-        } else if (!pile.isOwner(player)) {
+            // Only registered earnings piles react here (created via shop editor → connect earnings).
+            return false;
+        }
+        if (!pile.isOwner(player)) {
             Message.PILE_NOT_OWNER.send(player);
+            return true;
+        }
+        if (Permission.EARNINGS_PILE.lacksAndNotify(player)) {
             return true;
         }
 

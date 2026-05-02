@@ -53,6 +53,7 @@ public class ChangeBlockButton extends ShopButton {
         }
 
         Material newType = cursor.getType();
+        Material previousBlockType = shopBlock.getType();
         Message.BLOCK_CHANGE.parameterizer()
                 .put("block", Utils.capitalize(newType.toString().replace('_', ' ').toLowerCase()))
                 .send(player);
@@ -82,7 +83,9 @@ public class ChangeBlockButton extends ShopButton {
 
         shop.updateDisplay();
 
-        Utils.addItem(player, new ItemStack(item.getType()));
+        Material refundType = shop.getRefundMaterialForShopBlockReplace(previousBlockType);
+        Utils.addItem(player, new ItemStack(refundType));
+        shop.refreshOutOfStockAppearance();
         // Update inventory
         item.setType(newType);
     }

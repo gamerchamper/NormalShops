@@ -6,6 +6,7 @@ import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.utils.HoverableMessageParametizer;
 import me.gamechampcrafted.normalshops.utils.MessageParametizer;
+import me.gamechampcrafted.normalshops.utils.ShopSaleNotify;
 import me.gamechampcrafted.normalshops.utils.Utils;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -138,13 +139,7 @@ public class Transaction {
         if (owner == null || (shop.isAdminShop() && !Debug.SEND_ADMIN_SHOP_NOTIFICATIONS)) return true;
         if (!shop.isNotificationsEnabled()) return true;
 
-        Message ownerMessage;
-        if (shop.getProducts().size() <= 1) {
-            ownerMessage = Message.SELL_SINGLE;
-        } else {
-            ownerMessage = Message.SELL_MULTIPLE;
-        }
-        parameterizer.setMessage(ownerMessage).sendSilently(owner);
+        ShopSaleNotify.sendOwnerSellNotification(owner, buyer, shop);
         buySound.playSound(owner);
 
         // Just ran out of stock

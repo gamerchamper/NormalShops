@@ -47,8 +47,15 @@ permissions:
   normalshops.restore:
     description: Restore a shop from shop-backups.yml onto the block you stand on.
     default: op
+  normalshops.viewshops:
+    description: Open the GUI listing shops you own or are trusted on (remote access).
+    default: true
 commands:
   normalshops:
     description: Main NormalShops command
     aliases: [ nshops ]
-    usage: /<command> reload | /<command> delete | /<command> restore
+    usage: /<command> view | /<command> reload | /<command> delete | /<command> restore
+  viewshops:
+    description: List your shops and open them remotely (same as /normalshops view).
+    aliases: [ ]
+    permission: normalshops.viewshops

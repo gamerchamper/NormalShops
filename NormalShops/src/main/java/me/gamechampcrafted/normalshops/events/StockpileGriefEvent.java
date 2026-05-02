@@ -25,7 +25,7 @@ public class StockpileGriefEvent implements Listener {
         Location above = event.getBlock().getRelative(BlockFace.UP).getLocation();
         Player player = event.getPlayer();
         if (Permission.BYPASS_STOCKPILE.has(player)) return;
-        if (isStockpileAndNotOwner(above, player)) {
+        if (shouldDenyStockpileAccess(above, player)) {
             CoreProtectLogger.logShopEdit(player, above, "attempted to place hopper on stockpile");
             Message.STOCKPILE_NO_HOPPER.send(player);
             event.setCancelled(true);
@@ -40,16 +40,19 @@ public class StockpileGriefEvent implements Listener {
         Location location = block.getLocation();
         if (block.getType() != Material.CHEST && block.getType() != Material.BARREL) return;
         if (Permission.BYPASS_STOCKPILE.has(player)) return;
-        if (isStockpileAndNotOwner(location, player)) {
+        if (shouldDenyStockpileAccess(location, player)) {
             CoreProtectLogger.logShopEdit(player, location, "attempted to open stockpile without permission");
             Message.STOCKPILE_NOT_OWNER.send(player);
             event.setCancelled(true);
         }
     }
 
-    private boolean isStockpileAndNotOwner(Location location, Player player) {
+    private boolean shouldDenyStockpileAccess(Location location, Player player) {
         ShopManager shopManager = NormalShops.getInstance().getShopManager();
         UUID owner = shopManager.getStockpileOwner(location);
-        return owner != null && !owner.equals(player.getUniqueId());
+        if (owner == null) {
+            return false;
+        }
+        return !shopManager.playerMayAccessRegisteredStockpile(location, player);
     }
 }

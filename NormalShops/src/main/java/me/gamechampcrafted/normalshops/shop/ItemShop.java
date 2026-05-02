@@ -75,6 +75,12 @@ public class ItemShop implements ConfigurationSerializable {
     @Nullable
     private Material containerMaterial;
 
+    /**
+     * Serialized {@link org.bukkit.block.data.BlockData} (facing, etc.) for {@link #containerMaterial}.
+     */
+    @Nullable
+    private String containerBlockData;
+
     public ItemShop(
             Location location,
             Player owner,
@@ -104,7 +110,8 @@ public class ItemShop implements ConfigurationSerializable {
                 0L,
                 0L,
                 new ArrayList<>(),
-                safeContainerMaterial(location.getBlock().getType())
+                safeContainerMaterial(location.getBlock().getType()),
+                null
         );
     }
 
@@ -131,7 +138,8 @@ public class ItemShop implements ConfigurationSerializable {
             long lifetimeStockRemoved,
             long lifetimeImpressions,
             List<CoreProtectLogger.HistoryEntry> historyEntries,
-            @Nullable Material containerMaterial
+            @Nullable Material containerMaterial,
+            @Nullable String containerBlockData
     ) {
         this.location = location;
         this.ownerUUID = ownerUUID;
@@ -156,6 +164,7 @@ public class ItemShop implements ConfigurationSerializable {
         this.lifetimeImpressions = lifetimeImpressions;
         this.historyEntries = historyEntries;
         this.containerMaterial = containerMaterial;
+        this.containerBlockData = containerBlockData;
     }
 
     private static Material safeContainerMaterial(Material type) {
@@ -166,6 +175,22 @@ public class ItemShop implements ConfigurationSerializable {
             return Material.CHEST;
         }
         return type;
+    }
+
+    /**
+     * Block item to return when the owner replaces the shop container block (customize menu).
+     * When the storefront is the bedrock out-of-stock placeholder, refunds the stored real
+     * container type — never bedrock.
+     */
+    public Material getRefundMaterialForShopBlockReplace(Material previousWorldType) {
+        if (previousWorldType != Material.BEDROCK) {
+            return safeContainerMaterial(previousWorldType);
+        }
+        Material real = containerMaterial;
+        if (real == null) {
+            real = Material.CHEST;
+        }
+        return safeContainerMaterial(real);
     }
 
     public static Inventory createStockInventory() {
@@ -181,6 +206,7 @@ public class ItemShop implements ConfigurationSerializable {
     }
 
     public void delete(Player deleter) {
+        captureContainerAppearanceFromWorld();
         NormalShops plugin = NormalShops.getInstance();
         if (plugin != null && plugin.getShopBackupService() != null) {
             plugin.getShopBackupService().recordRemoval(this);
@@ -294,8 +320,19 @@ public class ItemShop implements ConfigurationSerializable {
         return Math.max(1, maxStack / unit);
     }
 
+    /**
+     * True when the shop can complete one sale. Uses the same aggregate count as
+     * {@link #getMinimumStockFulfillmentRatio()} (internal stock + all linked stockpiles), not
+     * {@link #getNextStockedInventory()} (which requires a single chest to hold the full bundle).
+     */
     public boolean hasStock() {
-        return isAdminShop() || containsItems(stockContents, products) || getNextStockedInventory() != null;
+        if (isAdminShop()) {
+            return true;
+        }
+        if (products == null || products.isEmpty()) {
+            return false;
+        }
+        return getMinimumStockFulfillmentRatio() >= 1.0;
     }
 
     /**
@@ -736,6 +773,37 @@ public class ItemShop implements ConfigurationSerializable {
         return containerMaterial;
     }
 
+    @Nullable
+    public String getContainerBlockData() {
+        return containerBlockData;
+    }
+
+    /**
+     * Saves material + orientation from the block at the shop location (skipped for air/bedrock).
+     */
+    public void captureContainerAppearanceFromWorld() {
+        if (location.getWorld() == null) {
+            return;
+        }
+        Block block = location.getBlock();
+        Material t = block.getType();
+        if (t == Material.AIR || t == Material.CAVE_AIR || t == Material.VOID_AIR || t == Material.BEDROCK) {
+            return;
+        }
+        containerMaterial = t;
+        containerBlockData = block.getBlockData().getAsString();
+    }
+
+    /**
+     * Applies stored material and {@link org.bukkit.block.data.BlockData} to the world block (e.g. after restore).
+     */
+    public void applySavedContainerBlockState() {
+        if (location.getWorld() == null) {
+            return;
+        }
+        restoreBlockFromSavedAppearance(location.getBlock());
+    }
+
     /**
      * Updates shop block + holograms when {@link Setting#DISPLAY_OUT_OF_STOCK} applies.
      * Safe to call from the main thread only (schedules async callers).
@@ -780,6 +848,7 @@ public class ItemShop implements ConfigurationSerializable {
         if (out) {
             if (block.getType() != Material.BEDROCK) {
                 containerMaterial = block.getType();
+                containerBlockData = block.getBlockData().getAsString();
                 saveData();
             } else if (containerMaterial == null) {
                 ensureContainerMaterialInitialized();
@@ -815,8 +884,22 @@ public class ItemShop implements ConfigurationSerializable {
             containerMaterial = Material.CHEST;
         } else {
             containerMaterial = t;
+            containerBlockData = block.getBlockData().getAsString();
         }
         saveData();
+    }
+
+    private void restoreBlockFromSavedAppearance(Block block) {
+        if (containerBlockData != null && !containerBlockData.isEmpty()) {
+            try {
+                block.setBlockData(Bukkit.createBlockData(containerBlockData), false);
+                return;
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        if (containerMaterial != null) {
+            block.setType(containerMaterial);
+        }
     }
 
     private void restoreShopBlockFromBedrockPlaceholder() {
@@ -826,13 +909,14 @@ public class ItemShop implements ConfigurationSerializable {
         if (containerMaterial == null) {
             ensureContainerMaterialInitialized();
         }
-        if (containerMaterial == null) {
+        if (containerMaterial == null && (containerBlockData == null || containerBlockData.isEmpty())) {
             return;
         }
         Block block = location.getBlock();
-        if (block.getType() == Material.BEDROCK) {
-            block.setType(containerMaterial);
+        if (block.getType() != Material.BEDROCK) {
+            return;
         }
+        restoreBlockFromSavedAppearance(block);
     }
 
     private void markEarningsChanged() {

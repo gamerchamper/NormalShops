@@ -46,6 +46,10 @@ public class FrameDisplay extends ShopDisplay {
     @Override
     public void applyOutOfStockVisual(boolean outOfStock) {
         if (!outOfStock) {
+            if (getShop() != null && !getShop().isBedrockOutOfStockStorefront()) {
+                prepareDisplays();
+                updateDisplay();
+            }
             return;
         }
         removeDisplayIfExists(itemUUID);

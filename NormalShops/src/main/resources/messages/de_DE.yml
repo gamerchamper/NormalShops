@@ -1,5 +1,5 @@
 # Managed by NormalShops — messages-version is bumped when the plugin adds keys; missing keys are merged from the jar on startup.
-messages-version: 2
+messages-version: 4
 
 # General
 update: "&eNormalShops: &a&lNeue Version verfügbar."
@@ -31,6 +31,9 @@ command-restore-block-invalid: "Schaue auf eine &eeinzelne Truhe &7oder ein &eFa
 command-restore-already-shop: "An diesem Block gibt es bereits einen aktiven Shop."
 command-restore-success: "Shop wiederhergestellt für &l{owner}&a bei &f{location}&a."
 
+view-shops-empty: "&7Du hast keine Shops (oder Vertrauens-Shops) zum Anzeigen."
+view-shops-cannot-open: "&cDieser Shop ist nicht verfügbar oder du kannst ihn nicht verwalten."
+
 shop-limit: "Shoplimit pro Spieler erreicht: &6&l{limit}"
 pile-limit: "Gewinntruhelimit pro Spieler erreicht: &6&l{limit}"
 stockpile-limit: "Lagertruhelimit für diesen Shop erreicht: &6&l{limit}"
@@ -47,6 +50,8 @@ shop-at-custom: "&a&l{name} &abei: &f&l{location}"
 shop-details: "&a&lBei: &f&l{location}\n&6Besitzer: &e&l{owner}"
 hover-various-products: "&a&nverschiedene Produkte"
 hover-your-shop: "&a&ndeinem Shop"
+hover-your-shop-notify: "&e&nShop-Menü öffnen"
+hover-your-shop-remote-hint: "&7Klicke hier oder nutze &f/viewshops &7 für Fernzugriff."
 buy-multiple: "Du hast [hoverVariousProducts]&a von &l{seller} &afür &f{price} &agekauft."
 buy-multiple-custom: "Du hast [hoverVariousProducts]&a von [hoverCustomName] &afür &f{price} &agekauft."
 buy-single: "Du hast &f{product} &avon &l{seller} &afür &f{price} &agekauft."
@@ -108,6 +113,8 @@ frame-remove-frame: "Rahmen entfernt."
 
 block-change: "Shopblock geändert."
 
+customize-requires-stock: "&cAnpassen ist nicht möglich, solange der Shop keinen Vorrat hat."
+
 display-clear: "Shopanzeige entfernt."
 
 display-glass-build: "Glasanzeige aufgebaut."
@@ -129,6 +136,7 @@ menu-stock-chest: "&8📦 Eigenlagertruhe"
 menu-settings: "&8🛠 &lEinstellungen"
 menu-earnings: "&5🔌 &lGewinntruhe"
 menu-delete: "&4🗑 Shop von &l{owner}"
+menu-my-shops: "&8📜 &lMeine Shops"
 menu-stockpile: "&8📦 Lagertruhe zu: &l{location}"
 menu-color: "&l🖌 Farbthema & Kaufton"
 

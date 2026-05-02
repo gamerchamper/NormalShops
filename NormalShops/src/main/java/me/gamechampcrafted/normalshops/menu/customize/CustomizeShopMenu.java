@@ -16,6 +16,16 @@ public class CustomizeShopMenu extends ShopMenu {
     }
 
     @Override
+    public void open() {
+        ItemShop shop = getShop();
+        if (!shop.isAdminShop() && !shop.hasStock()) {
+            Message.CUSTOMIZE_REQUIRES_STOCK.send(getPlayer());
+            return;
+        }
+        super.open();
+    }
+
+    @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
 

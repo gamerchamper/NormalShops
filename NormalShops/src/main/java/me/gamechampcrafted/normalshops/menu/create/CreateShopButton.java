@@ -63,6 +63,7 @@ public class CreateShopButton extends ChangeShopButton {
         }
 
         ItemShop shop = new ItemShop(location, player, price, products);
+        shop.captureContainerAppearanceFromWorld();
         NormalShops.getInstance().getShopManager().registerShop(shop);
         shop.saveData();
 

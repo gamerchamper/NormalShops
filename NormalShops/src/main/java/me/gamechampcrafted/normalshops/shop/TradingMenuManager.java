@@ -7,6 +7,7 @@ import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
 import me.gamechampcrafted.normalshops.utils.HoverableMessageParametizer;
 import me.gamechampcrafted.normalshops.utils.MessageParametizer;
+import me.gamechampcrafted.normalshops.utils.ShopSaleNotify;
 import me.gamechampcrafted.normalshops.utils.Utils;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -351,17 +352,7 @@ public class TradingMenuManager implements Listener {
     }
 
     private void sendSellMessages(Player owner, Player buyer, ItemShop shop) {
-        ItemStack price = shop.getPrice();
-        ItemStack product = shop.getProducts().get(0);
-
-        HoverableMessageParametizer parameterizer = Message.SELL_SINGLE.parameterizer()
-                .put("seller", owner.getDisplayName())
-                .put("buyer", buyer.getDisplayName())
-                .put("price", Utils.formatItemWithAmount(price))
-                .put("product", Utils.formatItemWithAmount(product))
-                .hoverable();
-
-        parameterizer.setMessage(Message.SELL_SINGLE).sendSilently(owner);
+        ShopSaleNotify.sendOwnerSellNotification(owner, buyer, shop);
     }
 
     private BaseComponent[] getHoverText(String message, String hoverText) {

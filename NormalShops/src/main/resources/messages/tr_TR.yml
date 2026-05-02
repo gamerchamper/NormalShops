@@ -1,5 +1,5 @@
 # tr_TR (Turkish) — currently English text; translate in place. Same merge rules as other bundled locales.
-messages-version: 2
+messages-version: 4
 
 # General
 update: "&eNormalShops: &a&lNew version available: &f{version}"
@@ -31,6 +31,9 @@ command-restore-block-invalid: "Look at a &esingle chest &7or &ebarrel &7(not a 
 command-restore-already-shop: "That block already has an active shop."
 command-restore-success: "Restored shop for &l{owner}&a at &f{location}&a."
 
+view-shops-empty: "&7You don't have any shops (or trusted shops) to show."
+view-shops-cannot-open: "&cThat shop isn't available or you can't manage it."
+
 shop-limit: "Shop limit per player reached: &6&l{limit}"
 pile-limit: "Earnings pile limit per player reached: &6&l{limit}"
 stockpile-limit: "Stockpile limit for this shop reached: &6&l{limit}"
@@ -47,6 +50,8 @@ shop-at-custom: "&2&l{name}\n&a&lAt: &f&l{location}"
 shop-details: "&a&lAt: &f&l{location}\n&6Owner: &e&l{owner}"
 hover-various-products: "&a&nvarious products"
 hover-your-shop: "&a&nyour shop"
+hover-your-shop-notify: "&e&nOpen shop menu"
+hover-your-shop-remote-hint: "&7Click here or run &f/viewshops &7to manage shops remotely."
 buy-multiple: "You bought [hoverVariousProducts]&a from &l{seller} &afor &f{price}."
 buy-multiple-custom: "You bought [hoverVariousProducts]&a from [hoverCustomName] &afor &f{price}."
 buy-single: "You bought &f{product} &afrom &l{seller} &afor &f{price}."
@@ -108,6 +113,8 @@ frame-remove-frame: "Frame removed."
 
 block-change: "Shop block changed to: &f&l{block}"
 
+customize-requires-stock: "&cCustomize is unavailable while this shop has no stock."
+
 display-clear: "Cleared shop display."
 
 display-glass-build: "Glass display built."
@@ -129,6 +136,7 @@ menu-stock-chest: "&8📦 Stock Chest"
 menu-settings: "&8🛠 &lSettings"
 menu-earnings: "&5🔌 &lEarnings Pile"
 menu-delete: "&4🗑 &l{owner}&4's Shop"
+menu-my-shops: "&8📜 &lMy Shops"
 menu-stockpile: "&8📦 Stockpile for: &l{location}"
 menu-color: "&l🖌 Theme & Sound"
 

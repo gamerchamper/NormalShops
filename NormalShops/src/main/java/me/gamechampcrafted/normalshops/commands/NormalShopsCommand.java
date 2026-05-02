@@ -7,9 +7,12 @@ import me.gamechampcrafted.normalshops.backup.ShopDataAutoBackup;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Permission;
 import me.gamechampcrafted.normalshops.data.Setting;
+import me.gamechampcrafted.normalshops.menu.edit.ShopAccessChoiceMenu;
+import me.gamechampcrafted.normalshops.menu.view.MyShopsListMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.shop.ShopBackupService;
 import me.gamechampcrafted.normalshops.utils.Utils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Material;
@@ -22,11 +25,16 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
+import org.bukkit.World;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class NormalShopsCommand implements CommandExecutor, TabCompleter {
 
@@ -35,6 +43,18 @@ public class NormalShopsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        String cmdName = command.getName().toLowerCase();
+        if ("viewshops".equals(cmdName)) {
+            return handleViewShops(sender, args);
+        }
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("view")) {
+            if (args.length != 1) {
+                return false;
+            }
+            return handleViewShops(sender, new String[0]);
+        }
+
         if (args.length == 0) {
             return false;
         }
@@ -154,6 +174,60 @@ public class NormalShopsCommand implements CommandExecutor, TabCompleter {
         return false;
     }
 
+    /** Lists shops or opens one remotely ({@code /viewshops}, {@code /normalshops view}, chat click). */
+    private boolean handleViewShops(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "This command can only be used by a player.");
+            return true;
+        }
+        if (!player.hasPermission("normalshops.viewshops")) {
+            Message.NO_PERMISSION.send(player);
+            return true;
+        }
+        if (args.length == 0) {
+            openMyShopsGui(player);
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("open") && args.length == 5) {
+            try {
+                UUID worldUid = UUID.fromString(args[1]);
+                int x = Integer.parseInt(args[2]);
+                int y = Integer.parseInt(args[3]);
+                int z = Integer.parseInt(args[4]);
+                World world = Bukkit.getWorld(worldUid);
+                if (world == null) {
+                    Message.VIEW_SHOPS_CANNOT_OPEN.send(player);
+                    return true;
+                }
+                Location loc = new Location(world, x, y, z).getBlock().getLocation();
+                ItemShop shop = ItemShop.get(loc);
+                if (shop == null || shop.isDeleted()) {
+                    Message.VIEW_SHOPS_CANNOT_OPEN.send(player);
+                    return true;
+                }
+                if (!shop.isOwner(player) && !shop.isTrusted(player)) {
+                    Message.VIEW_SHOPS_CANNOT_OPEN.send(player);
+                    return true;
+                }
+                new ShopAccessChoiceMenu(player, shop).open();
+                player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, .5f, .8f);
+            } catch (IllegalArgumentException e) {
+                Message.VIEW_SHOPS_CANNOT_OPEN.send(player);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void openMyShopsGui(Player player) {
+        List<ItemShop> shops = NormalShops.getInstance().getShopManager().listShopsAccessibleTo(player);
+        if (shops.isEmpty()) {
+            Message.VIEW_SHOPS_EMPTY.send(player);
+            return;
+        }
+        new MyShopsListMenu(player, shops, 0).open();
+    }
+
     private static boolean isStandaloneChestOrBarrel(Block block) {
         Material type = block.getType();
         if (type == Material.BARREL) {
@@ -171,8 +245,15 @@ public class NormalShopsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if ("viewshops".equalsIgnoreCase(command.getName())) {
+            return List.of();
+        }
+
         List<String> completions = new ArrayList<>();
         if (args.length == 1) {
+            if (sender.hasPermission("normalshops.viewshops")) {
+                completions.add("view");
+            }
             if (sender.hasPermission("normalshops.reload")) {
                 completions.add("reload");
             }

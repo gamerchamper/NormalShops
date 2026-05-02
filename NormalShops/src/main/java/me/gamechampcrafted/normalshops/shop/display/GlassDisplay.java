@@ -119,6 +119,12 @@ public class GlassDisplay extends ShopDisplay {
     @Override
     public void applyOutOfStockVisual(boolean outOfStock) {
         if (!outOfStock) {
+            // True path removed every display UUID and entities; callers often invoke update() next, but if anything
+            // short-circuits we must rebuild shell + item + sale hologram from persisted saleTextMessage here.
+            if (getShop() != null && !getShop().isBedrockOutOfStockStorefront()) {
+                prepareDisplays();
+                updateDisplay();
+            }
             return;
         }
         boolean migrated = false;

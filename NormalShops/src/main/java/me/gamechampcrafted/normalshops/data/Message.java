@@ -37,6 +37,9 @@ public enum Message {
     COMMAND_RESTORE_ALREADY_SHOP(MessageType.FAIL),
     COMMAND_RESTORE_SUCCESS(MessageType.CONFIRM),
 
+    VIEW_SHOPS_EMPTY(MessageType.FAIL),
+    VIEW_SHOPS_CANNOT_OPEN(MessageType.FAIL),
+
     STOCKPILE_NOT_OWNER(MessageType.FAIL),
     STOCKPILE_NO_BREAK(MessageType.FAIL),
     STOCKPILE_REMOVE_FIRST(MessageType.WARN),
@@ -57,6 +60,8 @@ public enum Message {
     SHOP_DETAILS,
     HOVER_VARIOUS_PRODUCTS,
     HOVER_YOUR_SHOP,
+    HOVER_YOUR_SHOP_NOTIFY,
+    HOVER_YOUR_SHOP_REMOTE_HINT,
     BUY_MULTIPLE(MessageType.TRANSACTION),
     BUY_MULTIPLE_CUSTOM(MessageType.TRANSACTION),
     BUY_SINGLE(MessageType.TRANSACTION),
@@ -118,6 +123,8 @@ public enum Message {
 
     BLOCK_CHANGE(MessageType.CONFIRM),
 
+    CUSTOMIZE_REQUIRES_STOCK(MessageType.FAIL),
+
     DISPLAY_CLEAR(MessageType.WARN),
 
     DISPLAY_GLASS_BUILD(MessageType.CONFIRM),
@@ -140,6 +147,7 @@ public enum Message {
     MENU_STOCKPILE,
     MENU_EARNINGS,
     MENU_DELETE,
+    MENU_MY_SHOPS,
     MENU_COLOR,
 
     // BUTTONS

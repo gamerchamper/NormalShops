@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.utils;
 
 import me.gamechampcrafted.normalshops.data.Message;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 
@@ -12,7 +13,8 @@ public class HoverableMessageParametizer extends MessageParametizer {
 
     private static final String HOVER_FORMAT = "[%s]";
 
-    private final Map<String, BaseComponent[]> hoverParams = new HashMap<>();
+    private final Map<String, BaseComponent[]> hoverParams = new LinkedHashMap<>();
+    private final Map<String, String> clickCommands = new LinkedHashMap<>();
 
     public HoverableMessageParametizer(Message message) {
         super(message);
@@ -20,6 +22,17 @@ public class HoverableMessageParametizer extends MessageParametizer {
 
     public HoverableMessageParametizer putHover(String key, BaseComponent[] components) {
         this.hoverParams.put(key, components);
+        return this;
+    }
+
+    /**
+     * Run when the player clicks the inserted hover segment (same {@code key} as {@link #putHover}).
+     * Typically used with {@link ClickEvent.Action#RUN_COMMAND}.
+     */
+    public HoverableMessageParametizer putClick(String key, String runCommand) {
+        if (runCommand != null && !runCommand.isEmpty()) {
+            this.clickCommands.put(key, runCommand);
+        }
         return this;
     }
 
@@ -42,30 +55,40 @@ public class HoverableMessageParametizer extends MessageParametizer {
     public BaseComponent[] toComponents() {
         List<BaseComponent> parameterizedComponents = new LinkedList<>();
         for (BaseComponent component : TextComponent.fromLegacyText(toString())) {
-            insertComponent(parameterizedComponents, component);
+            expandFully(parameterizedComponents, component);
         }
         return parameterizedComponents.toArray(new BaseComponent[0]);
     }
 
-    private void insertComponent(List<BaseComponent> list, BaseComponent component) {
+    /**
+     * Replaces placeholders until none remain, so messages can contain several distinct hover keys.
+     */
+    private void expandFully(List<BaseComponent> out, BaseComponent component) {
         String text = component.toLegacyText();
         for (Map.Entry<String, BaseComponent[]> entry : hoverParams.entrySet()) {
             String placeholder = String.format(HOVER_FORMAT, entry.getKey());
             if (text.contains(placeholder)) {
-                replaceComponent(list, text, placeholder, entry.getValue());
+                String[] parts = text.split(Pattern.quote(placeholder), -1);
+                String clickCmd = clickCommands.get(entry.getKey());
+                for (int i = 0; i < parts.length; i++) {
+                    if (i > 0) {
+                        for (BaseComponent hoverPart : entry.getValue()) {
+                            BaseComponent copy = hoverPart.duplicate();
+                            if (clickCmd != null && !clickCmd.isEmpty()) {
+                                copy.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, clickCmd));
+                            }
+                            out.add(copy);
+                        }
+                    }
+                    if (!parts[i].isEmpty()) {
+                        for (BaseComponent sub : TextComponent.fromLegacyText(parts[i])) {
+                            expandFully(out, sub);
+                        }
+                    }
+                }
                 return;
             }
         }
-        list.add(component);
-    }
-
-    private void replaceComponent(List<BaseComponent> list, String text, String placeholder, BaseComponent[] components) {
-        String[] parts = text.split(Pattern.quote(placeholder));
-        for (int i = 0; i < parts.length; i++) {
-            list.addAll(Arrays.asList(TextComponent.fromLegacyText(parts[i])));
-            if (i == 0 || i < parts.length - 1) {
-                list.addAll(Arrays.asList(components));
-            }
-        }
+        out.add(component);
     }
 }

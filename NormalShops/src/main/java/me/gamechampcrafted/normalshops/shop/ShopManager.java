@@ -49,6 +49,7 @@ public class ShopManager implements ConfigurationSerializable {
         uuidMap.put(shop.getLocation(), ownerUUID);
         saveData(ownerUUID);
         save();
+        shop.applySavedContainerBlockState();
         shop.refreshOutOfStockAppearance();
     }
 
@@ -128,11 +129,13 @@ public class ShopManager implements ConfigurationSerializable {
                 shop.getLifetimeStockRemoved(),
                 shop.getLifetimeImpressions(),
                 shop.getHistoryEntries(),
-                shop.getContainerMaterial()
+                shop.getContainerMaterial(),
+                shop.getContainerBlockData()
         );
         if (transferredShop.getDisplay() != null) {
             transferredShop.getDisplay().setShop(transferredShop);
         }
+        shop.captureContainerAppearanceFromWorld();
         NormalShops plugin = NormalShops.getInstance();
         if (plugin != null && plugin.getShopBackupService() != null) {
             plugin.getShopBackupService().recordRemoval(shop);
@@ -153,6 +156,28 @@ public class ShopManager implements ConfigurationSerializable {
         saveData(newOwnerUUID);
         save();
         return transferredShop;
+    }
+
+    /**
+     * Every shop this player owns or is trusted on (loaded shops only).
+     */
+    public List<ItemShop> listShopsAccessibleTo(Player player) {
+        List<ItemShop> out = new ArrayList<>();
+        UUID pid = player.getUniqueId();
+        for (Location loc : new ArrayList<>(uuidMap.keySet())) {
+            ItemShop shop = getShop(loc);
+            if (shop == null || shop.isDeleted()) continue;
+            if (shop.isOwner(player) || shop.isTrusted(player)) {
+                out.add(shop);
+            }
+        }
+        out.sort(Comparator
+                .comparing((ItemShop s) -> s.getLocation().getWorld() != null
+                        ? s.getLocation().getWorld().getName() : "")
+                .thenComparingInt(s -> s.getLocation().getBlockY())
+                .thenComparingInt(s -> s.getLocation().getBlockX())
+                .thenComparingInt(s -> s.getLocation().getBlockZ()));
+        return out;
     }
 
     public int getShopCount(UUID uuid) {
@@ -194,6 +219,64 @@ public class ShopManager implements ConfigurationSerializable {
     @Nullable
     public UUID getStockpileOwner(Location location) {
         return stockpileMap.get(location);
+    }
+
+    /**
+     * Whether the player may open this registered stockpile chest/barrel or place hoppers under it:
+     * shop owner, or trusted on a shop that lists this stockpile block.
+     */
+    public boolean playerMayAccessRegisteredStockpile(Location stockpileBlock, Player player) {
+        UUID ownerUuid = stockpileMap.get(stockpileBlock);
+        if (ownerUuid == null) {
+            return false;
+        }
+        if (player.getUniqueId().equals(ownerUuid)) {
+            return true;
+        }
+        Location key = stockpileBlock.getBlock().getLocation();
+        for (ItemShop shop : getShopManager(ownerUuid).getShops()) {
+            if (!shop.isTrusted(player)) {
+                continue;
+            }
+            if (shopLinksStockpileBlock(shop, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Re-runs out-of-stock / storefront updates for any shop that links this stockpile block
+     * (e.g. after items are changed in a physical chest or by hoppers).
+     */
+    public void refreshShopsUsingStockpile(Location stockpileBlock) {
+        if (stockpileBlock.getWorld() == null) {
+            return;
+        }
+        Location key = stockpileBlock.getBlock().getLocation();
+        UUID owner = stockpileMap.get(key);
+        if (owner == null) {
+            return;
+        }
+        for (ItemShop shop : getShopManager(owner).getShops()) {
+            if (shopLinksStockpileBlock(shop, key)) {
+                shop.refreshOutOfStockAppearance();
+            }
+        }
+    }
+
+    private static boolean shopLinksStockpileBlock(ItemShop shop, Location stockpileBlock) {
+        for (Location sl : shop.getStockpileSet()) {
+            if (sl.getWorld() == null || !sl.getWorld().equals(stockpileBlock.getWorld())) {
+                continue;
+            }
+            if (sl.getBlockX() == stockpileBlock.getBlockX()
+                    && sl.getBlockY() == stockpileBlock.getBlockY()
+                    && sl.getBlockZ() == stockpileBlock.getBlockZ()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @NotNull

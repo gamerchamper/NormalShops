@@ -123,6 +123,8 @@ public final class NormalShops extends JavaPlugin {
         NormalShopsCommand command = new NormalShopsCommand();
         getCommand("normalshops").setExecutor(command);
         getCommand("normalshops").setTabCompleter(command);
+        getCommand("viewshops").setExecutor(command);
+        getCommand("viewshops").setTabCompleter(command);
     }
 
     private void registerAllEvents() {
@@ -141,6 +143,7 @@ public final class NormalShops extends JavaPlugin {
                 new ShopCreateEvent(),
                 new PlaceEvent(),
                 new StockpileBreakEvent(),
+                new StockpileInventoryListener(),
                 new JoinEvent(),
                 new ExplodeEvent()
         );
