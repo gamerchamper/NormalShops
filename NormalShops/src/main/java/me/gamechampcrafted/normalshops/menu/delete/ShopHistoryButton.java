@@ -31,6 +31,9 @@ public class ShopHistoryButton extends ShopButton {
     protected void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player player = (Player) event.getWhoClicked();
+        if (AdminGuiSecurity.denyUnlessAdminTools(player, "open shop history (admin GUI)")) {
+            return;
+        }
         NormalShops.getInstance().getShopHistoryMenuManager().open(player, getShop());
     }
 }

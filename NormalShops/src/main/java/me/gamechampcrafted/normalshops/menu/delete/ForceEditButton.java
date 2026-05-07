@@ -31,6 +31,9 @@ public class ForceEditButton extends ShopButton {
     protected void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player player = (Player) event.getWhoClicked();
+        if (AdminGuiSecurity.denyUnlessAdminTools(player, "force edit shop (admin GUI)")) {
+            return;
+        }
         new EditShopMenu(player, getShop()).open();
     }
 }

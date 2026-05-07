@@ -36,6 +36,9 @@ public class EmulateSaleButton extends ShopButton {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player admin = (Player) event.getWhoClicked();
+        if (AdminGuiSecurity.denyUnlessAdminTools(admin, "emulate sale (admin GUI)")) {
+            return;
+        }
         ItemShop shop = getShop();
 
         if (!shop.hasStock()) {

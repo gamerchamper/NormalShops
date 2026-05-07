@@ -36,12 +36,18 @@ public class ForceChangeOwnerButton extends ShopButton {
     protected void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player admin = (Player) event.getWhoClicked();
+        if (AdminGuiSecurity.denyUnlessAdminTools(admin, "force change shop owner (admin GUI click)")) {
+            return;
+        }
         ItemShop currentShop = getShop();
         admin.closeInventory();
         admin.sendMessage(ChatColor.YELLOW + "Type the new owner username in chat (10s).");
 
         NormalShops.getInstance().getChatInputListener().addChatCallback(admin, input -> {
             Bukkit.getScheduler().runTask(NormalShops.getInstance(), () -> {
+                if (AdminGuiSecurity.denyUnlessAdminTools(admin, "force change shop owner (chat confirm)")) {
+                    return;
+                }
                 ItemShop shop = ItemShop.get(currentShop.getLocation());
                 if (shop == null || shop.isDeleted()) {
                     admin.sendMessage(ChatColor.RED + "Shop no longer exists.");

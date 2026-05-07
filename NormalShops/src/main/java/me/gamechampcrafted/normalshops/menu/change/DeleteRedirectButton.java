@@ -2,7 +2,6 @@ package me.gamechampcrafted.normalshops.menu.change;
 
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
-import me.gamechampcrafted.normalshops.menu.delete.DeleteShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -27,6 +26,6 @@ public class DeleteRedirectButton extends ShopButton {
     @Override
     protected void onClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
-        new DeleteShopMenu(player, getShop()).open();
+        new PlayerDeleteShopMenu(player, getShop()).open();
     }
 }

@@ -2,7 +2,6 @@ package me.gamechampcrafted.normalshops.menu.delete;
 
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
-import me.gamechampcrafted.normalshops.data.Permission;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -28,22 +27,20 @@ public class DeleteShopButton extends ShopButton {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player player = (Player) event.getWhoClicked();
-
-        player.closeInventory();
-
         ItemShop shop = getShop();
         if (shop.isOwner(player)) {
+            player.closeInventory();
             Message.DELETE_SHOP.send(player);
             CoreProtectLogger.logShopDelete(player, shop.getLocation());
             shop.delete(player);
             return;
         }
 
-        if (Permission.DELETE.lacks(player)) {
-            Message.SHOP_NO_BREAK.send(player);
+        if (AdminGuiSecurity.denyUnlessAdminTools(player, "delete another player's shop (admin GUI)")) {
             return;
         }
 
+        player.closeInventory();
         CoreProtectLogger.logShopDelete(player, shop.getLocation());
         shop.delete(player);
         Message.SHOP_BREAK_OPERATOR.parameterizer()

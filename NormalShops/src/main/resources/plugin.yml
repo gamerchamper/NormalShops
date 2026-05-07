@@ -27,7 +27,7 @@ permissions:
     description: Allows a player to connect earnings piles.
     default: true
   normalshops.delete:
-    description: Allows a player to delete anyone's shop.
+    description: Allows shift-sneak delete menu access; destroying others' shops and all admin GUI actions (force edit, transfer, history, emulate sale) also require operator.
     default: op
   normalshops.bypass-stockpile:
     description: Allows a player to open anyone's stockpiles.

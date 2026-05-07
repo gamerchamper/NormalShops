@@ -38,6 +38,9 @@ public class ShopHistoryMenuManager implements Listener {
     private final Map<UUID, Session> sessions = new HashMap<>();
 
     public void open(Player player, ItemShop shop) {
+        if (AdminGuiSecurity.denyUnlessAdminTools(player, "open shop history session")) {
+            return;
+        }
         List<CoreProtectLogger.HistoryEntry> entries =
                 CoreProtectLogger.getShopHistory(shop.getLocation(), 60 * 60 * 24 * 30);
         Session session = new Session(shop, entries);
@@ -109,6 +112,12 @@ public class ShopHistoryMenuManager implements Listener {
         Session session = sessions.get(player.getUniqueId());
         if (session == null || event.getInventory() != session.inventory) return;
         event.setCancelled(true);
+        if (!AdminGuiSecurity.canUseAdminTools(player)) {
+            AdminGuiSecurity.logExploitAttempt(player, "shop history GUI click without authority");
+            sessions.remove(player.getUniqueId());
+            player.closeInventory();
+            return;
+        }
 
         int slot = event.getRawSlot();
         if (slot == BACK_SLOT) {

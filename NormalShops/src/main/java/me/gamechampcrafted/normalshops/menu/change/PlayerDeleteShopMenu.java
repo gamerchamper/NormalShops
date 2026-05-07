@@ -1,16 +1,17 @@
-package me.gamechampcrafted.normalshops.menu.delete;
+package me.gamechampcrafted.normalshops.menu.change;
 
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
-import me.gamechampcrafted.normalshops.menu.edit.EditShopMenu;
+import me.gamechampcrafted.normalshops.menu.delete.DeleteShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.entity.Player;
 
-public class DeleteShopMenu extends ShopMenu {
-    public DeleteShopMenu(Player player, ItemShop shop) {
+public class PlayerDeleteShopMenu extends ShopMenu {
+
+    public PlayerDeleteShopMenu(Player player, ItemShop shop) {
         super(player, shop, 27, new ClickHandler(), MenuColor.RED,
                 Message.MENU_DELETE.parameterizer()
                         .put("owner", getSafeOwnerName(shop))
@@ -27,14 +28,12 @@ public class DeleteShopMenu extends ShopMenu {
 
     @Override
     protected void setupButtons() {
-        addButton(new ForceChangeOwnerButton(9, getShop()));
-        addButton(new ForceEditButton(11, getShop()));
         addButton(new DeleteShopButton(13, getShop()));
-        addButton(new ShopHistoryButton(15, getShop()));
-        // If deleter is the owner
-        if (getShop().isOwner(getPlayer())) {
-            addButton(new BackButton(18, new EditShopMenu(getPlayer(), getShop())));
-        }
+        addButton(new BackButton(18, new ChangeShopMenu(getPlayer(), getShop())));
     }
 
+    @Override
+    protected boolean enforceManagementAccess() {
+        return true;
+    }
 }
