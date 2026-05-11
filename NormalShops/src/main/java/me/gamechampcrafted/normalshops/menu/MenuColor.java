@@ -74,7 +74,8 @@ public enum MenuColor {
     };
 
     public Button getBackgroundButton(int slot) {
-        return new BlankButton(slot, rows[slot / 9]);
+        int row = Math.min(slot / 9, rows.length - 1);
+        return new BlankButton(slot, rows[row]);
     }
 
     public Material getIcon() {

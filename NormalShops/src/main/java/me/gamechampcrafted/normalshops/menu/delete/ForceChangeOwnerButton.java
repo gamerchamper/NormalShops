@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.menu.delete;
 
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.NormalShops;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -29,7 +30,8 @@ public class ForceChangeOwnerButton extends ShopButton {
                 Utils.colorize("&7Force transfer this shop to another player."),
                 Utils.colorize("&7After clicking, type a username in chat.")
         );
-        return createItem(Utils.colorize("&c👤 &lFORCE CHANGE OWNER"), lore, Material.PLAYER_HEAD, false);
+        return createItem(Utils.colorize("&c👤 &lFORCE CHANGE OWNER"), lore,
+                GuiIcons.material("delete-shop-admin.force-change-owner", Material.PLAYER_HEAD), false);
     }
 
     @Override

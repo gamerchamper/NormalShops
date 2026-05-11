@@ -21,7 +21,8 @@ public class BackButton extends Button {
         player.playSound(player, Sound.UI_LOOM_SELECT_PATTERN, 1f, 1f);
     }
 
-    private final ItemStack item = createItem(Message.BUTTON_BACK, Material.FLOWER_BANNER_PATTERN, false);
+    private final ItemStack item = createItem(Message.BUTTON_BACK,
+            GuiIcons.material("global.back", Material.FLOWER_BANNER_PATTERN), false);
 
     @Override
     public ItemStack getItem() {

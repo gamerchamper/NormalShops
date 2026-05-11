@@ -1,5 +1,5 @@
 # Managed by NormalShops — messages-version is bumped when the plugin adds keys; missing keys are merged from the jar on startup.
-messages-version: 4
+messages-version: 7
 
 # General
 update: "&eNormalShops: &a&lNew version available: &f{version}"
@@ -34,6 +34,16 @@ command-restore-success: "Restored shop for &l{owner}&a at &f{location}&a."
 view-shops-empty: "&7You don't have any shops (or trusted shops) to show."
 view-shops-cannot-open: "&cThat shop isn't available or you can't manage it."
 
+shops-menu-empty: "&7No shops are in stock in the browser right now."
+shops-menu-teleport-cooldown: "&cShop teleport is on cooldown: &e{seconds}s &cremaining."
+shops-menu-teleported: "&aTeleported to the shop."
+shops-menu-region-blocked: "&cThat shop is no longer listed in this area."
+shops-menu-world-unavailable: "&cThat shop's world isn't loaded."
+
+shops-item-usage: "&7Usage: &f/shops <item name>&7 or &f/shops item <item name>&7 — lists &fin-stock &7shops in the browser area selling that product. Names can be fuzzy (e.g. &fdiamond&7, &firon pickax&7)."
+shops-item-no-match: "&7Could not match an item for \"&f{query}&7\". Try common words (&estone&7, &ewood&7) or spaced names (&firon sword&7)."
+shops-item-no-shops-selling: "&7No in-stock shops in the browser area are selling \"&f{query}&7\" right now."
+
 shop-limit: "Shop limit per player reached: &6&l{limit}"
 pile-limit: "Earnings pile limit per player reached: &6&l{limit}"
 stockpile-limit: "Stockpile limit for this shop reached: &6&l{limit}"
@@ -44,6 +54,7 @@ stock-warning: "Your shop at &l{location} &cran out of stock."
 # Transactions
 buy-no-stock: "Shop is &lout of stock."
 buy-no-money: "You don't have enough money."
+buy-cooldown: "Wait {seconds}s before buying from this shop again."
 
 shop-at: "&a&lAt: &f&l{location}"
 shop-at-custom: "&2&l{name}\n&a&lAt: &f&l{location}"
@@ -137,7 +148,15 @@ menu-settings: "&8🛠 &lSettings"
 menu-earnings: "&5🔌 &lEarnings Pile"
 menu-delete: "&4🗑 &l{owner}&4's Shop"
 menu-my-shops: "&8📜 &lMy Shops"
+menu-public-shops: "&8🏪 &lShops"
 menu-stockpile: "&8📦 Stockpile for: &l{location}"
+menu-stockpile-browser: "&8☷ &6&lLinked Vaults"
+menu-stockpile-view-readonly: "&d✧ &lPeek &8┃ &7{location}"
+
+menu-stockpile-browser-entry: "&6⛃ &eVault &f№&e{index}"
+menu-stockpile-browser-entry-lore-1: "&8⊹ &f{location}"
+menu-stockpile-browser-entry-lore-2: "&a▸ &7Click for a &fsnapshot preview"
+menu-stockpile-browser-entry-lore-3: "&8◇ &7Read-only mirror · no withdrawals"
 menu-color: "&l🖌 Theme & Sound"
 
 # Buttons
@@ -187,6 +206,17 @@ button-customize: "🖌 CUSTOMIZE SHOP"
 button-customize-lore-1: "&8Click to customize this shop."
 
 button-connect-stock: "&8🔗 &lCONNECT STOCKPILE"
+button-stockpile-browser: "&b✦ &b&lREMOTE VAULTS &b✦"
+button-stockpile-browser-lore-1: "&7Browse every linked chest & barrel"
+button-stockpile-browser-lore-2: "&7from here — &fsnapshot preview &7only"
+button-stockpile-browser-lore-3: "&8✦ &7One peek viewer · anti-dupe mirrors"
+
+button-stockpile-browser-nav-back: "&f◀ &lBACK"
+button-stockpile-browser-nav-back-lore-1: "&7↩ Return to your"
+button-stockpile-browser-nav-back-lore-2: "&6&lStock Chest &7editor page"
+
+stockpile-view-in-use: "&cSomeone is already viewing this stockpile preview."
+stockpile-not-loaded: "&cThat stockpile is not loaded (chunk)."
 button-connect-stock-lore-1: "&7Click to connect/disconnect a stockpile."
 button-connect-stock-lore-2: "&8&oTip: &7&oYou can click on an empty spot"
 button-connect-stock-lore-3: "&7&oto cancel the selection."
@@ -288,6 +318,12 @@ button-stock-warning-enabled: "&6🔊 &lSTOCK WARNING: &a&lENABLED"
 button-stock-warning-disabled: "&6🔇 &lSTOCK WARNING: &c&lDISABLED"
 button-stock-warning-enabled-lore-1: "&8Click to enable/disable stock warnings"
 button-stock-warning-enabled-lore-2: "&8for when your shop runs out of stock."
+
+button-stats-hologram-enabled: "&d✧ &lSTATS HOLOGRAM: &a&lON"
+button-stats-hologram-disabled: "&d✧ &lSTATS HOLOGRAM: &c&lOFF"
+button-stats-hologram-enabled-lore-1: "&8Shows stock && earnings above this shop"
+button-stats-hologram-enabled-lore-2: "&8when you &flook at the block &8(owners/trusted only)."
+button-stats-hologram-enabled-lore-3: "&8Turn off if you do not want the floating text."
 
 button-clear-stockpiles: "&c🔗 &lDISCONNECT ALL STOCKPILES"
 button-clear-stockpiles-lore-1: "&8Click to disconnect &nall stockpiles"

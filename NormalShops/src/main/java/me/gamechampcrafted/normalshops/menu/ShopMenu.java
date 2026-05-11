@@ -118,15 +118,17 @@ public abstract class ShopMenu extends Menu {
         ItemStack price = shop.getPrice();
 
         //Display Price
+        int ps = Menu.priceSlot();
         if (price != null) {
-            addButton(new ItemButton(PRICE_SLOT, price));
+            addButton(new ItemButton(ps, price));
         } else {
-            addButton(new PriceButton(PRICE_SLOT));
+            addButton(new PriceButton(ps));
         }
 
         //Display Products
-        for (int i = 0; i < PRODUCT_SLOTS.size(); i++) {
-            int slot = PRODUCT_SLOTS.get(i);
+        List<Integer> slots = Menu.productSlots();
+        for (int i = 0; i < slots.size(); i++) {
+            int slot = slots.get(i);
             if (i < products.size()) {
                 ItemStack item = products.get(i);
                 if (item != null) {

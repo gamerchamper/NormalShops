@@ -8,8 +8,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 
-import static me.gamechampcrafted.normalshops.menu.Menu.EDITABLE_SLOTS;
-
 public class ClickHandler {
 
     /**
@@ -71,7 +69,7 @@ public class ClickHandler {
 
         if (cursor == null) return false;
 
-        for (Integer slot : EDITABLE_SLOTS) {
+        for (Integer slot : Menu.editableSlots()) {
             if (slot < 0 || slot >= topSize) {
                 continue;
             }

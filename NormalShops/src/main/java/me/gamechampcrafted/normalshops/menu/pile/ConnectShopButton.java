@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.menu.pile;
 
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.PileButton;
 import me.gamechampcrafted.normalshops.shop.Pile;
 import me.gamechampcrafted.normalshops.shop.connector.ShopConnector;
@@ -16,12 +17,10 @@ public class ConnectShopButton extends PileButton {
         super(slot, pile);
     }
 
-    private final ItemStack item =
-            createItem(Message.BUTTON_CONNECT_SHOP, Material.HOPPER, false);
-
     @Override
     public ItemStack getItem() {
-        return item;
+        return createItem(Message.BUTTON_CONNECT_SHOP,
+                GuiIcons.material("earnings-pile.connect-shop", Material.HOPPER), false);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package me.gamechampcrafted.normalshops.menu.delete;
 
 import me.gamechampcrafted.normalshops.NormalShops;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -24,7 +25,8 @@ public class ShopHistoryButton extends ShopButton {
                 Utils.colorize("&7View this shop's activity log"),
                 Utils.colorize("&7(buys, edits, connections, …).")
         );
-        return createItem(Utils.colorize("&b📜 &lSHOP HISTORY"), lore, Material.WRITABLE_BOOK, false);
+        return createItem(Utils.colorize("&b📜 &lSHOP HISTORY"), lore,
+                GuiIcons.material("delete-shop-admin.history", Material.WRITABLE_BOOK), false);
     }
 
     @Override

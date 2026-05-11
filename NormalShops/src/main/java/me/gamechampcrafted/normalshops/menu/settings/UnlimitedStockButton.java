@@ -4,6 +4,7 @@ import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
 import me.gamechampcrafted.normalshops.data.Permission;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -19,10 +20,12 @@ public class UnlimitedStockButton extends ShopButton {
         super(slot, shop);
         List<String> lore = Message.BUTTON_UNLIMITED_ENABLED.getLore();
         enabled = createItem(
-                Message.BUTTON_UNLIMITED_ENABLED.toString(), lore, Material.TOTEM_OF_UNDYING, true
+                Message.BUTTON_UNLIMITED_ENABLED.toString(), lore,
+                GuiIcons.material("settings.unlimited-enabled", Material.TOTEM_OF_UNDYING), true
         );
         disabled = createItem(
-                Message.BUTTON_UNLIMITED_DISABLED.toString(), lore, Material.TOTEM_OF_UNDYING, false
+                Message.BUTTON_UNLIMITED_DISABLED.toString(), lore,
+                GuiIcons.material("settings.unlimited-disabled", Material.TOTEM_OF_UNDYING), false
         );
     }
 

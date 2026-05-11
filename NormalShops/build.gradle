@@ -2,6 +2,9 @@ plugins {
     id 'java'
 }
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 group = 'me.gamechampcrafted'
 version = plugin_version
 
@@ -38,6 +41,112 @@ java {
     }
 }
 
+def generatedEmbeddingDir = layout.buildDirectory.dir('generated/sources/embedding')
+sourceSets.main.java.srcDir(generatedEmbeddingDir)
+
+tasks.register('generateEmbeddedBundledDefaults') {
+    def out = layout.buildDirectory.file('generated/sources/embedding/me/gamechampcrafted/normalshops/EmbeddedBundledDefaults.java')
+    outputs.file(out)
+    inputs.file('src/main/resources/config.yml')
+    inputs.file('src/main/resources/gui.yml')
+    inputs.files(fileTree('src/main/resources/messages'))
+
+    doLast {
+        def encoder = Base64.getEncoder()
+        def enc = { String text -> encoder.encodeToString(text.getBytes(StandardCharsets.UTF_8)) }
+
+        File rootDir = project.projectDir
+        String c = enc(file("$rootDir/src/main/resources/config.yml").text)
+        String gui = enc(file("$rootDir/src/main/resources/gui.yml").text)
+        String en = enc(file("$rootDir/src/main/resources/messages/en_US.yml").text)
+        String de = enc(file("$rootDir/src/main/resources/messages/de_DE.yml").text)
+        String tr = enc(file("$rootDir/src/main/resources/messages/tr_TR.yml").text)
+
+        out.get().asFile.parentFile.mkdirs()
+        out.get().asFile.withWriter(StandardCharsets.UTF_8.name()) { w ->
+            w << """package me.gamechampcrafted.normalshops;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+/**
+ * Bundled YAML merged at compile time from {@code src/main/resources}.
+ * Does not rely on {@link org.bukkit.plugin.Plugin#getResource(String)} or the plugin ClassLoader.
+ */
+public final class EmbeddedBundledDefaults {
+
+    private EmbeddedBundledDefaults() {}
+
+    private static String decode(String base64) {
+        return new String(Base64.getDecoder().decode(base64), StandardCharsets.UTF_8);
+    }
+
+    private static final String CONFIG_YML_B64 = "${c}";
+    private static final String GUI_YML_B64 = "${gui}";
+    private static final String MESSAGES_EN_US_B64 = "${en}";
+    private static final String MESSAGES_DE_DE_B64 = "${de}";
+    private static final String MESSAGES_TR_TR_B64 = "${tr}";
+
+    public static String configYml() {
+        return decode(CONFIG_YML_B64);
+    }
+
+    public static String guiYml() {
+        return decode(GUI_YML_B64);
+    }
+
+    public static String messagesEnUs() {
+        return decode(MESSAGES_EN_US_B64);
+    }
+
+    public static String messagesDeDe() {
+        return decode(MESSAGES_DE_DE_B64);
+    }
+
+    public static String messagesTrTr() {
+        return decode(MESSAGES_TR_TR_B64);
+    }
+
+    /** Locale file contents shipped with the plugin, or {@code null}. */
+    public static String messagesForLocale(String languageCode) {
+        if (languageCode == null) {
+            return null;
+        }
+        return switch (languageCode) {
+            case "en_US" -> messagesEnUs();
+            case "de_DE" -> messagesDeDe();
+            case "tr_TR" -> messagesTrTr();
+            default -> null;
+        };
+    }
+
+    /**
+     * Default YAML for paths normally copied from the jar (uses {@code /} internally).
+     */
+    public static String yamlDefaultForPath(String pathFromManager) {
+        if (pathFromManager == null) {
+            return null;
+        }
+        String p = pathFromManager.replace(java.io.File.separator, "/");
+        return switch (p) {
+            case "config.yml" -> configYml();
+            case "gui.yml" -> guiYml();
+            case "messages/en_US.yml" -> messagesEnUs();
+            case "messages/de_DE.yml" -> messagesDeDe();
+            case "messages/tr_TR.yml" -> messagesTrTr();
+            default -> null;
+        };
+    }
+}
+"""
+        }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn generateEmbeddedBundledDefaults
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 
@@ -53,4 +162,30 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
+    filesMatching('normal.yml') {
+        expand props
+    }
+}
+
+// plugin.yml must remain in the jar for Bukkit; config/messages defaults are compiled into EmbeddedBundledDefaults.
+tasks.register('validatePluginJar') {
+    dependsOn tasks.named('jar')
+    group = 'verification'
+    description = 'Fails the build if the plugin jar is missing plugin.yml.'
+    doLast {
+        def archive = tasks.named('jar', Jar).get().archiveFile.get().asFile
+        java.util.zip.ZipFile zip = new java.util.zip.ZipFile(archive)
+        try {
+            if (zip.getEntry('plugin.yml') == null) {
+                throw new GradleException(
+                        "Plugin jar is missing plugin.yml (${archive}). Resources live under src/main/resources.")
+            }
+        } finally {
+            zip.close()
+        }
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn validatePluginJar
 }

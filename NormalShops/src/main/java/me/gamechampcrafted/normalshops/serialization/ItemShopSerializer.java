@@ -1,6 +1,7 @@
 package me.gamechampcrafted.normalshops.serialization;
 
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
+import me.gamechampcrafted.normalshops.menu.ChangeShopButton;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
 import me.gamechampcrafted.normalshops.shop.BuySound;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
@@ -27,7 +28,7 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
         setLocation(location);
         UUID ownerUUID = UUID.fromString(getOrAbort("owner"));
         ItemStack price = getOrAbort("price");
-        List<ItemStack> products = getOrAbort("products");
+        List<ItemStack> products = ChangeShopButton.filterListingProducts(getOrAbort("products"));
 
         int earnings = getOrDefault("earnings", 0);
         List<Location> stockpileList = getListOrDefault("stockpiles", new ArrayList<>());
@@ -52,6 +53,7 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
 
         boolean notifications = getOrDefault("notifications", true);
         boolean stockWarning = getOrDefault("warning", true);
+        boolean privateStatsHologram = getOrDefault("private-stats-hologram", true);
         long lifetimeSales = getLongOrDefault("lifetime-sales", 0L);
         long lifetimeRevenue = getLongOrDefault("lifetime-revenue", 0L);
         long lifetimeProductsSold = getLongOrDefault("lifetime-products-sold", 0L);
@@ -67,7 +69,7 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
                 location, ownerUUID, price, products, earnings, stockpiles,
                 trustedPlayers,
                 stockContents, color, display, admin, customName, buySound,
-                notifications, stockWarning, lifetimeSales, lifetimeRevenue,
+                notifications, stockWarning, privateStatsHologram, lifetimeSales, lifetimeRevenue,
                 lifetimeProductsSold, lifetimeStockAdded, lifetimeStockRemoved, lifetimeImpressions, historyEntries,
                 containerMaterial,
                 containerBlockData
@@ -174,6 +176,7 @@ public class ItemShopSerializer extends Serializer<ItemShop> {
 
         map.put("notifications", shop.isNotificationsEnabled());
         map.put("warning", shop.isStockWarningEnabled());
+        map.put("private-stats-hologram", shop.isPrivateStatsHologramEnabled());
         map.put("lifetime-sales", shop.getLifetimeSales());
         map.put("lifetime-revenue", shop.getLifetimeRevenue());
         map.put("lifetime-products-sold", shop.getLifetimeProductsSold());

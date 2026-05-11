@@ -3,6 +3,8 @@ package me.gamechampcrafted.normalshops.menu.change;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.EditableClickHandler;
+import me.gamechampcrafted.normalshops.menu.Menu;
+import me.gamechampcrafted.normalshops.menu.ShopGuiLayout;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.menu.edit.EditShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
@@ -17,12 +19,17 @@ public class ChangeShopMenu extends ShopMenu {
     @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
-        addButton(new SaveChangesButton(12, shop));
-        addButton(new DeleteRedirectButton(30, shop));
+        addButton(new SaveChangesButton(Menu.changeShopSaveSlot(), shop));
+        addButton(new DeleteRedirectButton(Menu.changeShopDeleteSlot(), shop));
 
-        addButton(new BackButton(36, new EditShopMenu(getPlayer(), shop)));
+        addButton(new BackButton(Menu.changeShopBackSlot(), new EditShopMenu(getPlayer(), shop)));
 
         addPriceAndProductButtons(true);
+    }
+
+    @Override
+    protected void onAfterPlaceButtons() {
+        paintLayoutFillers("trading", ShopGuiLayout.get().tradingFillerSlots());
     }
 
     @Override

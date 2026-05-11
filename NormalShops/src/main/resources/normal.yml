@@ -1,0 +1,83 @@
+# Dual-format: identical schema to plugin.yml. Leaf loads this from normalplugins/;
+# Paper/Spigot continues to use plugin.yml from plugins/.
+name: NormalShops
+version: '${version}'
+main: me.gamechampcrafted.normalshops.NormalShops
+api-version: '1.20'
+authors: [ GameChampCrafted, Ridewithit ]
+description: NormalShops — player shops with GUIs, stockpiles, and earnings piles.
+permissions:
+  normalshops.create:
+    description: Allows a player to create a shop.
+    default: true
+  normalshops.buy:
+    description: Allows a player to buy from a shop.
+    default: true
+  normalshops.customize:
+    description: Allows a player to customize a shop.
+    default: true
+  normalshops.display:
+    description: Allows a player to build custom shop displays. (Player also needs normalshops.customize)
+    default: true
+  normalshops.sale-text:
+    description: Allows a player to add a sale text to a shop. (Player also needs normalshops.customize)
+    default: true
+  normalshops.stockpile:
+    description: Allows a player to connect stockpiles.
+    default: true
+  normalshops.earnings-pile:
+    description: Allows a player to connect earnings piles.
+    default: true
+  normalshops.delete:
+    description: Allows shift-sneak delete menu access; destroying others' shops and all admin GUI actions (force edit, transfer, history, emulate sale) also require operator.
+    default: op
+  normalshops.bypass-stockpile:
+    description: Allows a player to open anyone's stockpiles.
+    default: op
+  normalshops.unlimited-stock:
+    description: Allows a player to enable unlimited stock for their shops. (Dangerous!)
+    default: op
+  normalshops.coreprotect-test:
+    description: Test CoreProtect API integration
+    default: op
+  normalshops.coreprotect-debug:
+    description: Debug CoreProtect logging
+    default: op
+  normalshops.reload:
+    description: Allows reloading NormalShops config and messages.
+    default: op
+  normalshops.version:
+    description: View NormalShops version and Modrinth update status (/normalshops version).
+    default: true
+  normalshops.update-notify:
+    description: Receive chat notifications when a newer NormalShops release is on Modrinth (also ops).
+    default: op
+  normalshops.restore:
+    description: Restore a shop from shop-backups.yml onto the block you stand on.
+    default: op
+  normalshops.viewshops:
+    description: Open the GUI listing shops you own or are trusted on (remote access).
+    default: true
+  normalshops.shops:
+    description: Open the GUI listing in-stock shops and teleport to them.
+    default: true
+  normalshops.region:
+    description: Define /shops menu regions (/normalshops region make + /setpoint).
+    default: op
+commands:
+  normalshops:
+    description: Main NormalShops command
+    aliases: [ nshops ]
+    usage: /<command> view | /<command> reload | /<command> version | /<command> delete | /<command> restore | /<command> stats-holograms list|cleanup | /<command> region make|cancel
+  viewshops:
+    description: List your shops and open them remotely (same as /normalshops view).
+    aliases: [ ]
+    permission: normalshops.viewshops
+  shops:
+    description: Browse in-stock shops and teleport. /shops <item> filters by product (same as /shops item).
+    aliases: [ ]
+    permission: normalshops.shops
+  setpoint:
+    description: Set a corner for the /shops menu region — two points define the XZ rectangle (after /normalshops region make).
+    aliases: [ ]
+    permission: normalshops.region

@@ -7,6 +7,7 @@ import me.gamechampcrafted.normalshops.utils.Utils;
 import org.bukkit.command.CommandSender;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,16 @@ public enum Message {
     VIEW_SHOPS_EMPTY(MessageType.FAIL),
     VIEW_SHOPS_CANNOT_OPEN(MessageType.FAIL),
 
+    SHOPS_MENU_EMPTY(MessageType.FAIL),
+    SHOPS_MENU_TELEPORT_COOLDOWN(MessageType.FAIL),
+    SHOPS_MENU_TELEPORTED(MessageType.CONFIRM),
+    SHOPS_MENU_REGION_BLOCKED(MessageType.FAIL),
+    SHOPS_MENU_WORLD_UNAVAILABLE(MessageType.FAIL),
+
+    SHOPS_ITEM_USAGE(MessageType.FAIL),
+    SHOPS_ITEM_NO_MATCH(MessageType.FAIL),
+    SHOPS_ITEM_NO_SHOPS_SELLING(MessageType.FAIL),
+
     STOCKPILE_NOT_OWNER(MessageType.FAIL),
     STOCKPILE_NO_BREAK(MessageType.FAIL),
     STOCKPILE_REMOVE_FIRST(MessageType.WARN),
@@ -55,6 +66,7 @@ public enum Message {
     // TRANSACTIONS
     BUY_NO_STOCK(MessageType.FAIL),
     BUY_NO_MONEY(MessageType.FAIL),
+    BUY_COOLDOWN(MessageType.FAIL),
     SHOP_AT,
     SHOP_AT_CUSTOM,
     SHOP_DETAILS,
@@ -145,9 +157,18 @@ public enum Message {
     MENU_STOCK_CHEST,
     MENU_SETTINGS,
     MENU_STOCKPILE,
+    /** Linked stockpile picker opened from the stock chest nav row */
+    MENU_STOCKPILE_BROWSER,
+    /** Read-only mirror of one linked stockpile inventory */
+    MENU_STOCKPILE_VIEW_READONLY,
+    /** Browse grid row item; YAML uses placeholders {@code {index}} and {@code {location}}. */
+    MENU_STOCKPILE_BROWSER_ENTRY,
+    /** Back row in linked-stockpile browser (flower pattern). */
+    BUTTON_STOCKPILE_BROWSER_NAV_BACK,
     MENU_EARNINGS,
     MENU_DELETE,
     MENU_MY_SHOPS,
+    MENU_PUBLIC_SHOPS,
     MENU_COLOR,
 
     // BUTTONS
@@ -173,7 +194,11 @@ public enum Message {
     BUTTON_SETTINGS,
     BUTTON_CUSTOMIZE,
     BUTTON_CONNECT_STOCK,
+    BUTTON_STOCKPILE_BROWSER,
     BUTTON_CONNECT_EARNINGS,
+
+    STOCKPILE_VIEW_IN_USE(MessageType.FAIL),
+    STOCKPILE_NOT_LOADED(MessageType.FAIL),
 
     // BUY MENU
     BUTTON_BUY,
@@ -210,6 +235,8 @@ public enum Message {
     BUTTON_NOTIFICATIONS_DISABLED,
     BUTTON_STOCK_WARNING_ENABLED,
     BUTTON_STOCK_WARNING_DISABLED,
+    BUTTON_STATS_HOLOGRAM_ENABLED,
+    BUTTON_STATS_HOLOGRAM_DISABLED,
     BUTTON_CLEAR_STOCKPILES,
 
     BLANK;
@@ -265,6 +292,9 @@ public enum Message {
 
     public List<String> getLore() {
         if (type != null) throw new IllegalArgumentException("Not a button");
+        if (dataManager == null) {
+            return Collections.emptyList();
+        }
         return dataManager.getLore(getPath());
     }
 

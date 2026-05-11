@@ -32,25 +32,31 @@ public class MenuListener implements Listener {
         }
     }
 
+    /**
+     * Use the view's top inventory for lookup. {@link InventoryClickEvent#getInventory()} returns the
+     * inventory that contains the clicked slot; clicks on the player inventory use the bottom inventory as
+     * the key, so the menu was never found and shift-click / double-click collect were not cancelled
+     * (item dupes with spam shift + close).
+     */
     @EventHandler
     public void onClick(InventoryClickEvent event) {
-        Menu menu = activeMenus.get(event.getInventory());
+        Menu menu = activeMenus.get(event.getView().getTopInventory());
         if (menu != null) menu.onClick(event);
     }
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        Menu menu = activeMenus.get(event.getInventory());
+        Menu menu = activeMenus.get(event.getView().getTopInventory());
         if (menu != null) menu.onDrag(event);
     }
 
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
-        Inventory inv = event.getInventory();
-        Menu menu = activeMenus.get(inv);
+        Inventory top = event.getView().getTopInventory();
+        Menu menu = activeMenus.get(top);
         if (menu != null) {
-            unregisterActiveMenu(inv);
+            unregisterActiveMenu(top);
             menu.onClose(event);
         }
     }

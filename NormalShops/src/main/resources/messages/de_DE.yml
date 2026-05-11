@@ -1,5 +1,5 @@
 # Managed by NormalShops — messages-version is bumped when the plugin adds keys; missing keys are merged from the jar on startup.
-messages-version: 4
+messages-version: 7
 
 # General
 update: "&eNormalShops: &a&lNeue Version verfügbar."
@@ -34,6 +34,16 @@ command-restore-success: "Shop wiederhergestellt für &l{owner}&a bei &f{locatio
 view-shops-empty: "&7Du hast keine Shops (oder Vertrauens-Shops) zum Anzeigen."
 view-shops-cannot-open: "&cDieser Shop ist nicht verfügbar oder du kannst ihn nicht verwalten."
 
+shops-menu-empty: "&7Gerade sind keine Shops mit Lager im Browser."
+shops-menu-teleport-cooldown: "&cTeleport zum Shop abklingend: noch &e{seconds}s."
+shops-menu-teleported: "&aZum Shop teleportiert."
+shops-menu-region-blocked: "&cDieser Shop wird hier nicht mehr aufgeführt."
+shops-menu-world-unavailable: "&cDie Welt dieses Shops ist nicht geladen."
+
+shops-item-usage: "&7Nutze: &f/shops <Gegenstand>&7 oder &f/shops item <Gegenstand>&7 — zeigt &fvorrätige &7Shops im Browser-Bereich mit diesem Produkt. Namen dürfen ungenau sein."
+shops-item-no-match: "&7Kein passender Gegenstand für \"&f{query}&7\". Versuche einfache Wörter oder Abstände (&firon sword&7)."
+shops-item-no-shops-selling: "&7Gerade verkauft kein Shop mit Lager im Browser-Bereich \"&f{query}&7\"."
+
 shop-limit: "Shoplimit pro Spieler erreicht: &6&l{limit}"
 pile-limit: "Gewinntruhelimit pro Spieler erreicht: &6&l{limit}"
 stockpile-limit: "Lagertruhelimit für diesen Shop erreicht: &6&l{limit}"
@@ -44,6 +54,7 @@ stock-warning: "Dein Shop bei &l{location} &chat keine Waren mehr auf Lager."
 # Transactions
 buy-no-stock: "Shop &lnicht auf Lager."
 buy-no-money: "Du hast nicht genug Geld."
+buy-cooldown: "Warte {seconds}s, bevor du in diesem Shop wieder einkaufst."
 
 shop-at: "&aShop bei: &f&l{location}"
 shop-at-custom: "&a&l{name} &abei: &f&l{location}"
@@ -137,7 +148,15 @@ menu-settings: "&8🛠 &lEinstellungen"
 menu-earnings: "&5🔌 &lGewinntruhe"
 menu-delete: "&4🗑 Shop von &l{owner}"
 menu-my-shops: "&8📜 &lMeine Shops"
+menu-public-shops: "&8🏪 &lShops"
 menu-stockpile: "&8📦 Lagertruhe zu: &l{location}"
+menu-stockpile-browser: "&8☷ &6&lVerbundene Tresore"
+menu-stockpile-view-readonly: "&d✧ &lVorschau &8┃ &7{location}"
+
+menu-stockpile-browser-entry: "&6⛃ &eTresor &f№&e{index}"
+menu-stockpile-browser-entry-lore-1: "&8⊹ &f{location}"
+menu-stockpile-browser-entry-lore-2: "&a▸ &7Klick für &fSpiegel-Vorschau"
+menu-stockpile-browser-entry-lore-3: "&8◇ &7Nur Lesen · keine Entnahme"
 menu-color: "&l🖌 Farbthema & Kaufton"
 
 # Buttons
@@ -186,6 +205,18 @@ button-settings-lore-1: "&7Klicke, um die Shopeinstellungen zu ändern."
 
 button-customize: "🖌 SHOP ANPASSEN"
 button-customize-lore-1: "&8Klicke, um den Shop anzupassen."
+
+button-stockpile-browser: "&b✦ &b&lFERN-TRESORE &b✦"
+button-stockpile-browser-lore-1: "&7Alle Truhen && Fässer dieses Shops"
+button-stockpile-browser-lore-2: "&7hier als &fSpiegel &7öffnen"
+button-stockpile-browser-lore-3: "&8✦ &7Ein Betrachter · Dupe-Schutz"
+
+button-stockpile-browser-nav-back: "&f◀ &lZURÜCK"
+button-stockpile-browser-nav-back-lore-1: "&7↩ Zurück zur"
+button-stockpile-browser-nav-back-lore-2: "&6&lEigenlagertruhe"
+
+stockpile-view-in-use: "&cJemand sieht diese Lagertruhe bereits."
+stockpile-not-loaded: "&cLagertruhe nicht geladen (Chunk)."
 
 button-connect-stock: "&8🔗 &lLAGERTRUHE VERBINDEN"
 button-connect-stock-lore-1: "&7Klicke, um eine Lagertruhe zu verbinden/trennen."
@@ -291,6 +322,12 @@ button-stock-warning-enabled: "&6🔊 &lLAGERBESTANDSMELDUNG: &a&lAN"
 button-stock-warning-disabled: "&6🔇 &lLAGERBESTANDSMELDUNG: &c&lAUS"
 button-stock-warning-enabled-lore-1: "&8Klicke, um die Lagerbestandsmeldung"
 button-stock-warning-enabled-lore-2: "&8an- oder auszuschalten."
+
+button-stats-hologram-enabled: "&d✧ &lSTAT-HOLOGRAMM: &a&lAN"
+button-stats-hologram-disabled: "&d✧ &lSTAT-HOLOGRAMM: &c&lAUS"
+button-stats-hologram-enabled-lore-1: "&8Lager && Gewinne über diesem Shop"
+button-stats-hologram-enabled-lore-2: "&8nur wenn du den Block &fansiehst &8(Besitzer/Vertraute)."
+button-stats-hologram-enabled-lore-3: "&8Aus, wenn du keinen schwebenden Text willst."
 
 button-clear-stockpiles: "&c🔗 &lALLE LAGERTRUHEN ENTFERNEN"
 button-clear-stockpiles-lore-1: "&8Klicke, um &nalle Lagertruhen&8 von"

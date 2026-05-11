@@ -1,6 +1,7 @@
 package me.gamechampcrafted.normalshops.data;
 
 import me.gamechampcrafted.normalshops.Debug;
+import me.gamechampcrafted.normalshops.EmbeddedBundledDefaults;
 import me.gamechampcrafted.normalshops.utils.Utils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -9,9 +10,9 @@ import org.bukkit.plugin.Plugin;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class MessageManager {
      * On startup (and reload), each locale file on disk is merged with the jar:
      * keys you added stay in the jar; missing keys are filled in without overwriting custom text.
      */
-    public static final int VERSION = 4;
+    public static final int VERSION = 7;
 
     private static final String DIRECTORY_NAME = "messages";
 
@@ -58,42 +59,44 @@ public class MessageManager {
         dataManager = new YAMLDataManager(plugin, messagesDir, languageCode, dataRoot);
     }
 
-    /** Dev-only: replace on-disk locales with jar copies (drops local edits). */
+    /** Dev-only: replace on-disk locales with embedded copies (drops local edits). */
     private void extractEmbeddedLanguagesOverwrite(File messagesDir) {
         for (String lang : EMBEDDED_LANGUAGES) {
-            String rel = DIRECTORY_NAME + "/" + lang + ".yml";
+            File outFile = new File(messagesDir, lang + ".yml");
+            String embedded = EmbeddedBundledDefaults.messagesForLocale(lang);
+            if (embedded == null) {
+                plugin.getLogger().warning("[NormalShops] No embedded messages for: " + lang);
+                continue;
+            }
             try {
-                plugin.saveResource(rel, true);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("[NormalShops] Missing embedded file: " + rel);
+                Files.writeString(outFile.toPath(), embedded, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                plugin.getLogger().warning("[NormalShops] Could not write messages/" + lang + ".yml: " + e.getMessage());
             }
         }
     }
 
     private void syncEmbeddedLanguageFile(File messagesDir, String lang) throws IOException {
-        String resourcePath = DIRECTORY_NAME + "/" + lang + ".yml";
-        InputStream defStream = plugin.getResource(resourcePath);
-        if (defStream == null) {
-            plugin.getLogger().warning("[NormalShops] Missing " + resourcePath + " in plugin jar.");
+        String embedded = EmbeddedBundledDefaults.messagesForLocale(lang);
+        if (embedded == null) {
+            plugin.getLogger().warning("[NormalShops] No embedded messages for: " + lang);
             return;
         }
-        try (InputStream in = defStream) {
-            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(in, StandardCharsets.UTF_8));
-            File outFile = new File(messagesDir, lang + ".yml");
-            YamlConfiguration user = new YamlConfiguration();
-            if (outFile.exists()) {
-                user = YamlConfiguration.loadConfiguration(outFile);
-            }
-
-            int userVer = user.getInt("messages-version", 0);
-            if (userVer >= VERSION) {
-                return;
-            }
-
-            mergeMissingKeys(user, defaults);
-            user.set("messages-version", VERSION);
-            user.save(outFile);
+        YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new StringReader(embedded));
+        File outFile = new File(messagesDir, lang + ".yml");
+        YamlConfiguration user = new YamlConfiguration();
+        if (outFile.exists()) {
+            user = YamlConfiguration.loadConfiguration(outFile);
         }
+
+        int userVer = user.getInt("messages-version", 0);
+        if (userVer >= VERSION) {
+            return;
+        }
+
+        mergeMissingKeys(user, defaults);
+        user.set("messages-version", VERSION);
+        user.save(outFile);
     }
 
     /**
@@ -123,24 +126,19 @@ public class MessageManager {
         if (target.exists()) {
             return;
         }
-        String resourcePath = DIRECTORY_NAME + "/" + languageCode + ".yml";
-        if (plugin.getResource(resourcePath) != null) {
-            plugin.saveResource(resourcePath, false);
+        String embedded = EmbeddedBundledDefaults.messagesForLocale(languageCode);
+        if (embedded != null) {
+            Files.writeString(target.toPath(), embedded, StandardCharsets.UTF_8);
             return;
         }
 
-        InputStream en = plugin.getResource("messages/en_US.yml");
-        if (en == null) {
-            throw new IOException("Missing messages/en_US.yml in plugin jar.");
-        }
-        try (InputStream in = en) {
-            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(in, StandardCharsets.UTF_8));
-            YamlConfiguration user = new YamlConfiguration();
-            mergeMissingKeys(user, defaults);
-            user.set("messages-version", VERSION);
-            user.save(target);
-        }
-        plugin.getLogger().info("[NormalShops] Created messages/" + languageCode + ".yml from English defaults — translate or edit as you like.");
+        YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                new StringReader(EmbeddedBundledDefaults.messagesEnUs()));
+        YamlConfiguration user = new YamlConfiguration();
+        mergeMissingKeys(user, defaults);
+        user.set("messages-version", VERSION);
+        user.save(target);
+        plugin.getLogger().info("[NormalShops] Created messages/" + languageCode + ".yml from embedded English defaults — translate or edit as you like.");
     }
 
     /**

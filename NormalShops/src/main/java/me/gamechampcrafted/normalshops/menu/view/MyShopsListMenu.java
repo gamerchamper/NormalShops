@@ -3,9 +3,11 @@ package me.gamechampcrafted.normalshops.menu.view;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.Button;
-import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.GuiDisplayItem;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.Menu;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.edit.ShopAccessChoiceMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -23,6 +25,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Paginated list of shops the player owns or is trusted on; opens {@link ShopAccessChoiceMenu} for remote management.
@@ -31,17 +35,28 @@ public class MyShopsListMenu extends Menu {
 
     /** Shop icons — rows 0–3 (slots 0–35). Bottom row 36–44 is pagination ({@link Menu#MAX_SIZE}). */
     private static final int PAGE_SIZE = 36;
+    private static final List<Integer> DEFAULT_SHOP_ENTRY_SLOTS =
+            IntStream.range(0, PAGE_SIZE).boxed().collect(Collectors.toList());
     private static final int BOTTOM_ROW_FIRST = 36;
     private static final int BOTTOM_ROW_LAST = 44;
-    private static final int PREV_SLOT = 36;
-    private static final int INFO_SLOT = 40;
-    private static final int NEXT_SLOT = 44;
+
+    private static int prevSlot() {
+        return MenuSlotRegistry.slot("my-shops", "prev-page", 36);
+    }
+
+    private static int infoSlot() {
+        return MenuSlotRegistry.slot("my-shops", "pagination-info", 40);
+    }
+
+    private static int nextSlot() {
+        return MenuSlotRegistry.slot("my-shops", "next-page", 44);
+    }
 
     private final List<ItemShop> allShops;
     private final int page;
 
     public MyShopsListMenu(Player player, List<ItemShop> allShops, int page) {
-        super(player, player.getLocation(), Menu.MAX_SIZE, new ClickHandler(), MenuColor.BLACK, buildTitle(allShops, page));
+        super(player, player.getLocation(), Menu.MAX_SIZE, new ShopsListClickHandler(), MenuColor.BLACK, buildTitle(allShops, page));
         this.allShops = allShops;
         this.page = Math.max(0, page);
     }
@@ -58,11 +73,14 @@ public class MyShopsListMenu extends Menu {
         int currentPage = Math.min(page, totalPages - 1);
         int start = currentPage * PAGE_SIZE;
 
+        List<Integer> shopSlots = MenuSlotRegistry.slots("my-shops", "shop-entry", DEFAULT_SHOP_ENTRY_SLOTS);
         for (int i = 0; i < PAGE_SIZE && start + i < allShops.size(); i++) {
-            addButton(new ShopEntryButton(i, getPlayer(), allShops.get(start + i)));
+            addButton(new ShopEntryButton(shopSlots.get(i), getPlayer(), allShops.get(start + i)));
         }
 
-        addButton(navButton(PREV_SLOT, Material.ARROW, ChatColor.YELLOW + "Previous Page",
+        addButton(navButton(prevSlot(),
+                GuiIcons.material("my-shops.nav-enabled", Material.ARROW),
+                ChatColor.YELLOW + "Previous Page",
                 currentPage > 0,
                 e -> new MyShopsListMenu(getPlayer(), allShops, currentPage - 1).open()));
 
@@ -72,17 +90,20 @@ public class MyShopsListMenu extends Menu {
                 ? ChatColor.GRAY + "No shops"
                 : ChatColor.GOLD + String.valueOf(showingFrom) + ChatColor.DARK_GRAY + " – "
                 + ChatColor.GOLD + String.valueOf(showingTo) + ChatColor.GRAY + " / " + allShops.size();
-        addButton(navButton(INFO_SLOT, Material.BOOK,
+        addButton(navButton(infoSlot(),
+                GuiIcons.material("my-shops.info", Material.BOOK),
                 ChatColor.GOLD + "Page " + (currentPage + 1) + "/" + totalPages,
                 List.of(rangeInfo),
-                false, null));
+                true, null));
 
-        addButton(navButton(NEXT_SLOT, Material.ARROW, ChatColor.YELLOW + "Next Page",
+        addButton(navButton(nextSlot(),
+                GuiIcons.material("my-shops.nav-enabled", Material.ARROW),
+                ChatColor.YELLOW + "Next Page",
                 currentPage + 1 < totalPages,
                 e -> new MyShopsListMenu(getPlayer(), allShops, currentPage + 1).open()));
 
         for (int s = BOTTOM_ROW_FIRST; s <= BOTTOM_ROW_LAST; s++) {
-            if (s == PREV_SLOT || s == INFO_SLOT || s == NEXT_SLOT) {
+            if (s == prevSlot() || s == infoSlot() || s == nextSlot()) {
                 continue;
             }
             addButton(glass(s));
@@ -93,13 +114,8 @@ public class MyShopsListMenu extends Menu {
         return new Button(slot) {
             @Override
             public ItemStack getItem() {
-                ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-                ItemMeta meta = pane.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName(" ");
-                    pane.setItemMeta(meta);
-                }
-                return pane;
+                Material paneMat = GuiIcons.material("global.pagination-glass", Material.GRAY_STAINED_GLASS_PANE);
+                return GuiDisplayItem.paperIconWithMeta(paneMat, " ", List.of());
             }
 
             @Override
@@ -113,21 +129,13 @@ public class MyShopsListMenu extends Menu {
         return navButton(slot, mat, title, List.of(), enabled, onClick);
     }
 
+    /** {@code enabled} only gates clicks — icon is always {@code mat}. */
     private Button navButton(int slot, Material mat, String title, List<String> lore, boolean enabled,
                            java.util.function.Consumer<InventoryClickEvent> onClick) {
         return new Button(slot) {
             @Override
             public ItemStack getItem() {
-                ItemStack item = new ItemStack(enabled ? mat : Material.GRAY_STAINED_GLASS_PANE);
-                ItemMeta meta = item.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName(title);
-                    if (!lore.isEmpty()) {
-                        meta.setLore(lore);
-                    }
-                    item.setItemMeta(meta);
-                }
-                return item;
+                return GuiDisplayItem.paperIconWithMeta(mat, title, lore.isEmpty() ? List.of() : lore);
             }
 
             @Override
@@ -158,13 +166,14 @@ public class MyShopsListMenu extends Menu {
             if (mat == Material.AIR || !mat.isItem()) {
                 mat = Material.CHEST;
             }
-            ItemStack icon = new ItemStack(mat);
+            ItemStack icon = new ItemStack(Material.PAPER);
             ItemMeta meta = icon.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(displayTitle());
                 meta.setLore(loreLines());
                 icon.setItemMeta(meta);
             }
+            GuiDisplayItem.applyVanillaItemModelToPaper(icon, mat.getKey());
             return icon;
         }
 

@@ -1,0 +1,288 @@
+# NormalShops — GUI layouts (recipe grids) and icon materials.
+# Reload: /normalshops reload   |   layouts.trading / layouts.owner also fall back to config.yml shop-gui if missing.
+#
+# filler-key: single character marking “empty” decorative slots (often X). Those slots are painted with
+# icons.<menu-id>.background if set, else icons.global.background (after normal menu styling).
+#
+# Price / product editor GUIs use layouts.price-product (or legacy layouts.trading) + icons.trading.*
+gui-config-version: 1
+
+# Material names: Spigot enum (e.g. GOLD_INGOT). See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
+icons:
+  global:
+    background: GRAY_STAINED_GLASS_PANE
+    back: FLOWER_BANNER_PATTERN
+    pagination-prev: ARROW
+    pagination-next: ARROW
+    pagination-info: BOOK
+    pagination-glass: GRAY_STAINED_GLASS_PANE
+  # Used by layouts.price-product / layouts.trading (change listing, create shop, buy GUI).
+  trading:
+    background: RED_STAINED_GLASS_PANE
+    price-empty: LIGHT_GRAY_STAINED_GLASS_PANE
+    product-empty: LIGHT_GRAY_STAINED_GLASS_PANE
+    buy-in-stock: LIME_CONCRETE_POWDER
+    buy-out-of-stock: RED_CONCRETE_POWDER
+    create-shop: ANVIL
+    save-changes: ANVIL
+    delete-listing: BARRIER
+  owner:
+    background: ORANGE_STAINED_GLASS_PANE
+    collect: DIAMOND
+    change-listing: ANVIL
+    customize: PAINTING
+    settings: REDSTONE
+    connect-stockpile: CHEST
+    stock-chest: ENDER_CHEST
+    trusted-players: PLAYER_HEAD
+    analytics: BOOK
+    shop-info: WRITTEN_BOOK
+  settings:
+    notifications-enabled: EMERALD
+    notifications-disabled: GRAY_DYE
+    stock-warning-enabled: BELL
+    stock-warning-disabled: GRAY_DYE
+    clear-stockpiles: TNT_MINECART
+    stats-hologram-enabled: ENDER_EYE
+    stats-hologram-disabled: GRAY_DYE
+    unlimited-enabled: TOTEM_OF_UNDYING
+    unlimited-disabled: TOTEM_OF_UNDYING
+  shop-access:
+    stock-chest: CHEST
+    editor: ANVIL
+    trade: EMERALD
+    earnings: DIAMOND
+  delete-shop-admin:
+    force-change-owner: PLAYER_HEAD
+    force-edit: ANVIL
+    delete: BARRIER
+    history: WRITTEN_BOOK
+  delete-shop-player:
+    delete: BARRIER
+  remove-trusted:
+    confirm: LIME_CONCRETE
+    cancel: RED_CONCRETE
+  earnings-pile:
+    connect-shop: HOPPER
+    collect: GOLD_INGOT
+  shop-analytics:
+    background: BLUE_STAINED_GLASS_PANE
+    revenue: EMERALD
+    sales: GOLD_INGOT
+    products-sold: CHEST
+    impressions: ENDER_EYE
+    stock-added: LIME_DYE
+    stock-removed: RED_DYE
+    internal-stock: HOPPER
+    avg-revenue: PAPER
+    avg-items: BOOK
+    utilization: CLOCK
+    conversion: TARGET
+    net-stock: COMPARATOR
+    unique-buyers: PLAYER_HEAD
+    top-buyers: WRITABLE_BOOK
+    market-compare: COMPASS
+  trusted-players:
+    add-player: LIME_DYE
+  market-comparison:
+    page-info: BOOK
+    prev-page: ARROW
+    next-page: ARROW
+    market-compare: COMPASS
+  public-shops:
+    nav-enabled: ARROW
+    nav-disabled: ARROW
+    info: BOOK
+  my-shops:
+    nav-enabled: ARROW
+    nav-disabled: ARROW
+    info: BOOK
+
+# Chest GUIs: 5 rows × 9 cols (45 slots) unless noted.
+#
+# Layout menu IDs (overview):
+#   price-product — Price slot | 3×3 products | Buy / Save / Delete / Back (create shop, edit listing, customer buy)
+#   trading       — YAML alias of price-product (same grid); either key works
+#   owner         — Shop control panel after opening a shop
+layouts:
+  # Price | Products | Buy/Save/Delete/Back — CreateShopMenu, ChangeShopMenu, BuyMenu.
+  price-product: &price_product_gui
+    filler-key: 'X'
+    trading-keys:
+      price: 'P'
+      product: 'O'
+      buy: 'B'
+      save: 'S'
+      delete: 'D'
+      back: 'K'
+    trading-layout:
+      - "XXXXXXXXX"
+      - "XXXSXOOOX"
+      - "XPXBXOOOX"
+      - "XXXDXOOOX"
+      - "KXXXXXXXX"
+
+  trading: *price_product_gui
+
+  owner:
+    filler-key: 'X'
+    owner-keys:
+      collect: 'E'
+      change-listing: 'L'
+      customize: 'U'
+      settings: 'G'
+      connect-stockpile: 'F'
+      stock-chest: 'H'
+      trusted-players: 'T'
+      analytics: 'A'
+      shop-info: 'I'
+    owner-layout:
+      - "XXXXXXXXX"
+      - "XLXXEXXUX"
+      - "XFXXHXXGX"
+      - "XXXXXXXXX"
+      - "TAXXXXXXI"
+
+  settings:
+    role-keys:
+      notifications: 'N'
+      stock-warning: 'S'
+      clear-stockpiles: 'C'
+      stats-hologram: 'H'
+      unlimited-stock: 'U'
+      back: 'B'
+    rows:
+      - "XXXXXXXXX"
+      - "XXXNSCHUX"
+      - "XXXXXXXXX"
+      - "XXXXXXXXX"
+      - "BXXXXXXXX"
+
+  shop-analytics:
+    filler-key: 'X'
+    role-keys:
+      revenue: 'R'
+      sales: 'V'
+      products-sold: 'P'
+      impressions: 'I'
+      stock-added: 'A'
+      stock-removed: 'D'
+      internal-stock: 'H'
+      avg-revenue: '1'
+      avg-items: '2'
+      utilization: '3'
+      conversion: '4'
+      net-stock: '5'
+      unique-buyers: '6'
+      top-buyers: '7'
+      market-compare: 'M'
+      back: 'K'
+    rows:
+      - "XXXXXXXXX"
+      - "XRAVPIDHX"
+      - "XXXXXXXXX"
+      - "X1234567X"
+      - "KXXXMXXXX"
+
+  trusted-players:
+    role-keys:
+      entry: '#'
+      add-player: '+'
+      back: 'B'
+    rows:
+      - "X#######X"
+      - "X#######X"
+      - "X#######X"
+      - "XXXXXXXXX"
+      - "BXX+XXXXX"
+
+  market-comparison:
+    role-keys:
+      entry: '#'
+      back: 'K'
+      prev-page: '<'
+      page-info: 'P'
+      market-compare: 'M'
+      next-page: '>'
+    rows:
+      - "X#######X"
+      - "X#######X"
+      - "X#######X"
+      - "XXXXXXXXX"
+      - "K<XPMXX>X"
+
+  shop-access:
+    role-keys:
+      stock-chest: 'S'
+      editor: 'E'
+      trade: 'T'
+      earnings: 'N'
+    rows:
+      - "XXXXXXXXX"
+      - "XSXEXTXNX"
+      - "XXXXXXXXX"
+
+  remove-trusted:
+    role-keys:
+      confirm: 'C'
+      cancel: 'N'
+    rows:
+      - "XXXXXXXXX"
+      - "XXCXXXNXX"
+      - "XXXXXXXXX"
+
+  delete-shop-admin:
+    role-keys:
+      force-change-owner: 'O'
+      force-edit: 'E'
+      delete: 'D'
+      history: 'H'
+      back: 'B'
+    rows:
+      - "XXXXXXXXX"
+      - "OXEXDXHXX"
+      - "BXXXXXXXX"
+
+  delete-shop-player:
+    role-keys:
+      delete: 'D'
+      back: 'B'
+    rows:
+      - "XXXXXXXXX"
+      - "XXXXDXXXX"
+      - "BXXXXXXXX"
+
+  earnings-pile:
+    role-keys:
+      connect-shop: 'C'
+      collect: 'E'
+    rows:
+      - "XXXXXXXXX"
+      - "XXXCXEXXX"
+      - "XXXXXXXXX"
+
+  public-shops:
+    role-keys:
+      shop-entry: '#'
+      prev-page: '<'
+      pagination-info: 'I'
+      next-page: '>'
+    rows:
+      - "#########"
+      - "#########"
+      - "#########"
+      - "#########"
+      - "<XXXIXXX>"
+
+  my-shops:
+    role-keys:
+      shop-entry: '#'
+      prev-page: '<'
+      pagination-info: 'I'
+      next-page: '>'
+    rows:
+      - "#########"
+      - "#########"
+      - "#########"
+      - "#########"
+      - "<XXXIXXX>"

@@ -4,7 +4,9 @@ import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.Button;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -25,12 +27,12 @@ public class ShopMarketComparisonMenu extends ShopMenu {
 
     private static final int MAX_PRODUCT_LORE_LINES = 8;
 
-    private static final List<Integer> LIST_SLOTS = List.of(
+    private static final List<Integer> LIST_SLOTS_FALLBACK = List.of(
             10, 11, 12, 13, 14, 15, 16,
             19, 20, 21, 22, 23, 24, 25,
             28, 29, 30, 31, 32, 33, 34
     );
-    private static final int PAGE_SIZE = LIST_SLOTS.size();
+    private static final int PAGE_SIZE = LIST_SLOTS_FALLBACK.size();
     private final int page;
 
     public ShopMarketComparisonMenu(Player player, ItemShop shop) {
@@ -45,7 +47,9 @@ public class ShopMarketComparisonMenu extends ShopMenu {
     @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
-        addButton(new BackButton(36, new ShopAnalyticsMenu(getPlayer(), shop)));
+        addButton(new BackButton(MenuSlotRegistry.slot("market-comparison", "back", 36), new ShopAnalyticsMenu(getPlayer(), shop)));
+
+        List<Integer> listSlots = MenuSlotRegistry.slots("market-comparison", "entry", LIST_SLOTS_FALLBACK);
 
         List<ComparableShop> comparable = getComparableShops(shop);
         comparable.sort(Comparator
@@ -58,16 +62,20 @@ public class ShopMarketComparisonMenu extends ShopMenu {
         int end = Math.min(start + PAGE_SIZE, comparable.size());
 
         for (int i = start; i < end; i++) {
-            addButton(new CompetitorButton(LIST_SLOTS.get(i - start), comparable.get(i), shop));
+            addButton(new CompetitorButton(listSlots.get(i - start), comparable.get(i), shop));
         }
 
-        addButton(pageControl(40, Material.BOOK, "&bPage " + (currentPage + 1) + "/" + totalPages, null));
+        addButton(pageControl(MenuSlotRegistry.slot("market-comparison", "page-info", 40),
+                GuiIcons.material("market-comparison.page-info", Material.BOOK),
+                "&bPage " + (currentPage + 1) + "/" + totalPages, null));
         if (currentPage > 0) {
-            addButton(pageControl(37, Material.ARROW, "&ePrevious Page",
+            addButton(pageControl(MenuSlotRegistry.slot("market-comparison", "prev-page", 37),
+                    GuiIcons.material("market-comparison.prev-page", Material.ARROW), "&ePrevious Page",
                     event -> new ShopMarketComparisonMenu(getPlayer(), shop, currentPage - 1).open()));
         }
         if (currentPage + 1 < totalPages) {
-            addButton(pageControl(43, Material.ARROW, "&eNext Page",
+            addButton(pageControl(MenuSlotRegistry.slot("market-comparison", "next-page", 43),
+                    GuiIcons.material("market-comparison.next-page", Material.ARROW), "&eNext Page",
                     event -> new ShopMarketComparisonMenu(getPlayer(), shop, currentPage + 1).open()));
         }
     }

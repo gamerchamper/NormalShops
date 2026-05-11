@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.change;
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.ChangeShopButton;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -20,7 +21,8 @@ public class SaveChangesButton extends ChangeShopButton {
     }
 
     private final ItemStack item = createItem(
-            Message.BUTTON_SAVE_CHANGES, Material.ANVIL, false
+            Message.BUTTON_SAVE_CHANGES,
+            GuiIcons.material("trading.save-changes", Material.ANVIL), false
     );
 
     @Override

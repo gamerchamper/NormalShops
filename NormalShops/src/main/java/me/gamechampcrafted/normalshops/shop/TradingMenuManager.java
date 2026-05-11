@@ -5,6 +5,7 @@ import me.gamechampcrafted.normalshops.Debug;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
+import me.gamechampcrafted.normalshops.data.Setting;
 import me.gamechampcrafted.normalshops.utils.HoverableMessageParametizer;
 import me.gamechampcrafted.normalshops.utils.MessageParametizer;
 import me.gamechampcrafted.normalshops.utils.ShopSaleNotify;
@@ -24,6 +25,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -32,16 +34,24 @@ import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 
 public class TradingMenuManager implements Listener {
+
+    private static final long MERCHANT_IDLE_CLOSE_MS = 30_000L;
 
     private final Map<UUID, TradingSession> sessions = new HashMap<>();
 
     public void openTradingMenu(Player player, ItemShop shop) {
         if (NormalShops.getInstance().getStockChestManager().hasActiveStockViewersForShopByOther(shop, player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "Shop stock is currently being edited by another player.");
+            MessageType.FAIL.playSound(player);
+            return;
+        }
+        if (hasActiveSessionForShopByOther(shop, player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "Another player is already using this shop's trade menu.");
             MessageType.FAIL.playSound(player);
             return;
         }
@@ -58,13 +68,15 @@ public class TradingMenuManager implements Listener {
         if (products.size() == 1) {
             ItemStack product = products.get(0);
             int maxUses = shop.isAdminShop() ? Integer.MAX_VALUE : (outOfStock ? 0 : calculateMaxUses(shop, product));
-            MerchantRecipe recipe = new MerchantRecipe(product.clone(), maxUses);
+            ItemStack result = PhysicalItemProxy.wrapMerchantResult(product.clone());
+            MerchantRecipe recipe = new MerchantRecipe(result, maxUses);
             recipe.addIngredient(price.clone());
             recipes.add(recipe);
         } else {
             ItemStack bundle = createBundle(products);
             int maxUses = shop.isAdminShop() ? Integer.MAX_VALUE : (outOfStock ? 0 : calculateBundleMaxUses(shop, products));
-            MerchantRecipe bundleRecipe = new MerchantRecipe(bundle, maxUses);
+            ItemStack bundleResult = PhysicalItemProxy.wrapMerchantResult(bundle);
+            MerchantRecipe bundleRecipe = new MerchantRecipe(bundleResult, maxUses);
             bundleRecipe.addIngredient(price.clone());
             recipes.add(bundleRecipe);
 
@@ -78,10 +90,113 @@ public class TradingMenuManager implements Listener {
 
         int[] initialUses = new int[recipes.size()];
         merchant.setRecipes(recipes);
+        TradingSession session = new TradingSession(player, shop, merchant, initialUses, products.size() > 1);
+        // Register before opening so another player cannot slip in on the same tick.
+        registerSession(player.getUniqueId(), session);
         player.openMerchant(merchant, true);
-        sessions.put(player.getUniqueId(), new TradingSession(player, shop, merchant, initialUses, products.size() > 1));
+        // Maximum-frequency validation while the merchant UI is open (anti-dupe / stale offers).
+        session.stockWatchTask = Bukkit.getScheduler().runTaskTimer(NormalShops.getInstance(), () -> stockWatchTick(session), 0L, 1L);
     }
 
+    private void registerSession(UUID playerId, TradingSession session) {
+        TradingSession previous = sessions.put(playerId, session);
+        if (previous != null) {
+            previous.cancelStockWatch();
+        }
+    }
+
+    /**
+     * Runs every server tick while a trading session exists: re-syncs recipe limits with live stock,
+     * blocks trades if stock is being edited elsewhere, and reconciles villager uses (cheap no-op when idle).
+     */
+    private void stockWatchTick(TradingSession session) {
+        Player player = session.player;
+        UUID id = player.getUniqueId();
+        TradingSession active = sessions.get(id);
+        if (active != session) {
+            session.cancelStockWatch();
+            return;
+        }
+        if (!player.isOnline()) {
+            session.cancelStockWatch();
+            sessions.remove(id, session);
+            return;
+        }
+        Inventory top = player.getOpenInventory().getTopInventory();
+        if (top.getType() != InventoryType.MERCHANT) {
+            return;
+        }
+
+        if (System.currentTimeMillis() - session.lastActivityMs >= MERCHANT_IDLE_CLOSE_MS) {
+            player.closeInventory();
+            return;
+        }
+
+        ItemShop shopLive = ItemShop.get(session.shop.getLocation());
+        if (shopLive == null || shopLive.isDeleted()) {
+            session.cancelStockWatch();
+            sessions.remove(id, session);
+            player.closeInventory();
+            return;
+        }
+
+        if (NormalShops.getInstance().getStockChestManager().hasActiveStockViewersForShopByOther(shopLive, id)) {
+            session.cancelStockWatch();
+            sessions.remove(id, session);
+            player.closeInventory();
+            player.sendMessage(ChatColor.RED + "Shop stock is currently being edited by another player.");
+            MessageType.FAIL.playSound(player);
+            return;
+        }
+
+        refreshMerchantRecipes(session, shopLive);
+        reconcileTrades(session);
+    }
+
+    /** Keeps {@link MerchantRecipe#getMaxUses()} aligned with current stock + already completed uses. */
+    private void refreshMerchantRecipes(TradingSession session, ItemShop shop) {
+        List<MerchantRecipe> recipes = session.merchant.getRecipes();
+        List<ItemStack> products = shop.getProducts();
+        if (products.isEmpty()) {
+            return;
+        }
+
+        if (shop.isAdminShop()) {
+            for (int i = 0; i < recipes.size(); i++) {
+                MerchantRecipe r = recipes.get(i);
+                if (session.isBundle && i > 0) {
+                    r.setMaxUses(0);
+                } else {
+                    r.setMaxUses(Integer.MAX_VALUE);
+                }
+            }
+            return;
+        }
+
+        if (session.isBundle) {
+            MerchantRecipe bundleRecipe = recipes.get(0);
+            int uses = bundleRecipe.getUses();
+            int remaining = calculateBundleMaxUses(shop, products);
+            bundleRecipe.setMaxUses(uses + Math.max(0, remaining));
+            for (int i = 1; i < recipes.size(); i++) {
+                recipes.get(i).setMaxUses(0);
+            }
+            return;
+        }
+
+        for (int i = 0; i < recipes.size() && i < products.size(); i++) {
+            MerchantRecipe recipe = recipes.get(i);
+            ItemStack product = products.get(i);
+            int uses = recipe.getUses();
+            int remaining = calculateMaxUses(shop, product);
+            recipe.setMaxUses(uses + Math.max(0, remaining));
+        }
+    }
+
+    /**
+     * Real chest stack (not paper): merchant bundle preview embeds products via {@link BlockStateMeta} chest inventory,
+     * which only applies to block items like chests.
+     */
     private ItemStack createBundle(List<ItemStack> products) {
         ItemStack chestItem = new ItemStack(Material.CHEST);
         BlockStateMeta meta = (BlockStateMeta) chestItem.getItemMeta();
@@ -105,9 +220,17 @@ public class TradingMenuManager implements Listener {
     private ItemStack createPreviewItem(ItemStack product) {
         ItemStack preview = product.clone();
         ItemMeta meta = preview.getItemMeta();
-        String name = meta.hasDisplayName() ? meta.getDisplayName() : Utils.getFormattedName(product);
+        if (meta == null) {
+            return preview;
+        }
+        ItemMeta sourceMeta = product.getItemMeta();
+        String name = sourceMeta != null && sourceMeta.hasDisplayName()
+                ? sourceMeta.getDisplayName()
+                : Utils.getFormattedName(product);
         meta.setDisplayName(ChatColor.GRAY + "[Preview] " + ChatColor.WHITE + name);
-        List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        List<String> lore = sourceMeta != null && sourceMeta.hasLore() && sourceMeta.getLore() != null
+                ? new ArrayList<>(sourceMeta.getLore())
+                : new ArrayList<>();
         lore.add(0, ChatColor.GRAY + "Included in bundle");
         meta.setLore(lore);
         preview.setItemMeta(meta);
@@ -166,6 +289,42 @@ public class TradingMenuManager implements Listener {
         return ChatColor.DARK_RED + "Out of Stock " + ChatColor.GRAY + "| " + ChatColor.RESET + owner;
     }
 
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onMerchantBuyCooldown(InventoryClickEvent event) {
+        if (event.getInventory().getType() != InventoryType.MERCHANT) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        TradingSession session = sessions.get(player.getUniqueId());
+        if (session == null) return;
+        if (event.getSlot() != 2) return;
+        int cooldownSec = Setting.BUY_COOLDOWN_SECONDS.getInt();
+        Integer waitSec = ShopPurchaseCooldown.blockingRemaining(player, session.shop.getLocation(), cooldownSec);
+        if (waitSec == null) return;
+        event.setCancelled(true);
+        Message.BUY_COOLDOWN.parameterizer().put("seconds", String.valueOf(waitSec)).send(player);
+        MessageType.FAIL.playSound(player);
+    }
+
+    /**
+     * Any click or drag in the merchant UI counts as activity for the idle auto-close timer.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onMerchantSessionActivity(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        TradingSession session = sessions.get(player.getUniqueId());
+        if (session == null) return;
+        if (player.getOpenInventory().getTopInventory().getType() != InventoryType.MERCHANT) return;
+        session.touchActivity();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onMerchantSessionDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        TradingSession session = sessions.get(player.getUniqueId());
+        if (session == null) return;
+        if (player.getOpenInventory().getTopInventory().getType() != InventoryType.MERCHANT) return;
+        session.touchActivity();
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onTradeClick(InventoryClickEvent event) {
         if (event.getInventory().getType() != InventoryType.MERCHANT) return;
@@ -183,6 +342,7 @@ public class TradingMenuManager implements Listener {
         if (!(event.getPlayer() instanceof Player player)) return;
         TradingSession session = sessions.remove(player.getUniqueId());
         if (session == null) return;
+        session.cancelStockWatch();
         reconcileTrades(session);
     }
 
@@ -297,6 +457,8 @@ public class TradingMenuManager implements Listener {
 
         if (totalTrades == 0) return;
 
+        ShopPurchaseCooldown.record(buyer, shop.getLocation());
+
         sendBuyMessages(buyer, shop);
 
         Player owner = Bukkit.getPlayer(shop.getOwnerUUID());
@@ -310,6 +472,17 @@ public class TradingMenuManager implements Listener {
         if (!shop.hasStock()) {
             NormalShops.getInstance().getShopManager().addWarning(shop);
         }
+
+        Bukkit.getScheduler().runTask(NormalShops.getInstance(), () -> {
+            if (!buyer.isOnline()) {
+                return;
+            }
+            TradingSession still = sessions.get(buyer.getUniqueId());
+            if (still != session) {
+                return;
+            }
+            buyer.closeInventory();
+        });
     }
 
     private void sendBuyMessages(Player buyer, ItemShop shop) {
@@ -365,13 +538,17 @@ public class TradingMenuManager implements Listener {
     }
 
     public void closeAllSessions() {
-        new ArrayList<>(sessions.keySet()).forEach(uuid -> {
+        for (UUID uuid : new ArrayList<>(sessions.keySet())) {
+            TradingSession session = sessions.get(uuid);
+            if (session != null) {
+                session.cancelStockWatch();
+            }
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
                 player.closeInventory();
-                sessions.remove(uuid);
             }
-        });
+            sessions.remove(uuid);
+        }
     }
 
     public boolean hasActiveSessionForShopByOther(ItemShop shop, UUID playerUUID) {
@@ -386,6 +563,8 @@ public class TradingMenuManager implements Listener {
         final Merchant merchant;
         final int[] previousUses;
         final boolean isBundle;
+        BukkitTask stockWatchTask;
+        long lastActivityMs;
 
         TradingSession(Player player, ItemShop shop, Merchant merchant, int[] previousUses, boolean isBundle) {
             this.player = player;
@@ -393,6 +572,18 @@ public class TradingMenuManager implements Listener {
             this.merchant = merchant;
             this.previousUses = previousUses;
             this.isBundle = isBundle;
+            this.lastActivityMs = System.currentTimeMillis();
+        }
+
+        void touchActivity() {
+            this.lastActivityMs = System.currentTimeMillis();
+        }
+
+        void cancelStockWatch() {
+            if (stockWatchTask != null) {
+                stockWatchTask.cancel();
+                stockWatchTask = null;
+            }
         }
     }
 }

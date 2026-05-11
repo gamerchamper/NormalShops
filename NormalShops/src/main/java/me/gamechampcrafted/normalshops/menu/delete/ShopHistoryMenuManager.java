@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.delete;
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
+import me.gamechampcrafted.normalshops.menu.GuiDisplayItem;
 import me.gamechampcrafted.normalshops.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -83,6 +84,7 @@ public class ShopHistoryMenuManager implements Listener {
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
+        GuiDisplayItem.stampGuiItem(item);
         return item;
     }
 
@@ -97,13 +99,7 @@ public class ShopHistoryMenuManager implements Listener {
     }
 
     private ItemStack createNavItem(Material material, String name) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            item.setItemMeta(meta);
-        }
-        return item;
+        return GuiDisplayItem.paperIconWithMeta(material, name, List.of());
     }
 
     @EventHandler

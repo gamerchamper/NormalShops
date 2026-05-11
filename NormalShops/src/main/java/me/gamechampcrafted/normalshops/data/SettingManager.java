@@ -1,5 +1,6 @@
 package me.gamechampcrafted.normalshops.data;
 
+import me.gamechampcrafted.normalshops.EmbeddedBundledDefaults;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -7,16 +8,14 @@ import org.bukkit.plugin.Plugin;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.io.StringReader;
 
 public class SettingManager {
 
     /**
      * Bump when the bundled {@code config.yml} gains new keys. Older files get those keys merged in on load.
      */
-    private static final int VERSION = 3;
+    private static final int VERSION = 15;
 
     private static final String FILE_NAME = "config";
 
@@ -43,14 +42,10 @@ public class SettingManager {
     }
 
     private YamlConfiguration loadBundledDefaults() {
-        try (InputStream in = plugin.getResource(FILE_NAME + ".yml")) {
-            if (in == null) {
-                plugin.getLogger().severe("[NormalShops] Missing " + FILE_NAME + ".yml in the plugin jar.");
-                return null;
-            }
-            return YamlConfiguration.loadConfiguration(new InputStreamReader(in, StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            plugin.getLogger().severe("[NormalShops] Could not read bundled " + FILE_NAME + ".yml: " + e.getMessage());
+        try {
+            return YamlConfiguration.loadConfiguration(new StringReader(EmbeddedBundledDefaults.configYml()));
+        } catch (Exception e) {
+            plugin.getLogger().severe("[NormalShops] Could not read embedded config defaults: " + e.getMessage());
             return null;
         }
     }

@@ -1,6 +1,7 @@
 package me.gamechampcrafted.normalshops.menu.pile;
 
 import me.gamechampcrafted.normalshops.data.Message;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.PileButton;
 import me.gamechampcrafted.normalshops.shop.Pile;
 import org.bukkit.Material;
@@ -14,12 +15,10 @@ public class PileCollectButton extends PileButton {
         super(slot, pile);
     }
 
-    private final ItemStack item =
-            createItem(Message.BUTTON_PILE_COLLECT, Material.DIAMOND, false);
-
     @Override
     public ItemStack getItem() {
-        return item;
+        return createItem(Message.BUTTON_PILE_COLLECT,
+                GuiIcons.material("earnings-pile.collect", Material.DIAMOND), false);
     }
 
     public void clickSound(Player player) {

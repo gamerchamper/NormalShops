@@ -7,6 +7,8 @@ import me.gamechampcrafted.normalshops.data.Setting;
 import me.gamechampcrafted.normalshops.menu.Button;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.menu.buy.BuyMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
@@ -30,10 +32,10 @@ public class ShopAccessChoiceMenu extends ShopMenu {
 
     @Override
     protected void setupButtons() {
-        addButton(new StockQuickButton(10, getShop()));
-        addButton(new EditorButton(12, getShop()));
-        addButton(new TradeButton(14, getShop()));
-        addButton(new EarningsQuickButton(16, getShop()));
+        addButton(new StockQuickButton(MenuSlotRegistry.slot("shop-access", "stock-chest", 10), getShop()));
+        addButton(new EditorButton(MenuSlotRegistry.slot("shop-access", "editor", 12), getShop()));
+        addButton(new TradeButton(MenuSlotRegistry.slot("shop-access", "trade", 14), getShop()));
+        addButton(new EarningsQuickButton(MenuSlotRegistry.slot("shop-access", "earnings", 16), getShop()));
     }
 
     private static class StockQuickButton extends Button {
@@ -46,7 +48,8 @@ public class ShopAccessChoiceMenu extends ShopMenu {
 
         @Override
         public ItemStack getItem() {
-            return createItem(Message.BUTTON_STOCK_CHEST, Material.CHEST, false);
+            return createItem(Message.BUTTON_STOCK_CHEST,
+                    GuiIcons.material("shop-access.stock-chest", Material.CHEST), false);
         }
 
         @Override
@@ -75,7 +78,7 @@ public class ShopAccessChoiceMenu extends ShopMenu {
             return createItem(
                     Message.BUTTON_COLLECT.toString(),
                     earningsQuickLore(shop),
-                    Material.DIAMOND,
+                    GuiIcons.material("shop-access.earnings", Material.DIAMOND),
                     false);
         }
 
@@ -112,7 +115,7 @@ public class ShopAccessChoiceMenu extends ShopMenu {
             return createItem(
                     Utils.colorize("&6🛠 &lOPEN EDITOR"),
                     Arrays.asList(Utils.colorize("&7Manage this shop.")),
-                    Material.ANVIL,
+                    GuiIcons.material("shop-access.editor", Material.ANVIL),
                     false
             );
         }
@@ -138,7 +141,7 @@ public class ShopAccessChoiceMenu extends ShopMenu {
             return createItem(
                     Utils.colorize("&a💱 &lOPEN TRADE"),
                     Arrays.asList(Utils.colorize("&7Open customer trade view.")),
-                    Material.EMERALD,
+                    GuiIcons.material("shop-access.trade", Material.EMERALD),
                     false
             );
         }

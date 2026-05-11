@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.shop;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Permission;
+import me.gamechampcrafted.normalshops.menu.GuiDisplayItem;
 import me.gamechampcrafted.normalshops.menu.edit.EditShopMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -21,8 +22,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +37,8 @@ public class StockChestManager implements Listener {
     private static final int INFO_SLOT = 48;
     private static final int BACK_SLOT = 49;
     private static final int NEXT_SLOT = 53;
+    /** Browse linked stockpiles (read-only mirrors); exclusive with other bottom-row nav actions. */
+    private static final int STOCKPILE_BROWSER_SLOT = 52;
 
     private final Map<UUID, Session> sessions = new HashMap<>();
 
@@ -69,12 +70,14 @@ public class StockChestManager implements Listener {
         Inventory inventory = Bukkit.createInventory(null, 54, getPageTitle(session.shop, session.page));
         List<ItemStack> pageItems = session.shop.getStockPageContents(session.page, PAGE_SIZE);
         for (int i = 0; i < PAGE_SIZE; i++) {
-            inventory.setItem(i, pageItems.get(i));
+            ItemStack cell = pageItems.get(i);
+            inventory.setItem(i, PhysicalItemProxy.wrapForShopDisplay(cell));
         }
         inventory.setItem(PREV_SLOT, createNavItem(Material.ARROW, ChatColor.YELLOW + "Previous Page"));
         inventory.setItem(INFO_SLOT, createNavItem(Material.CHEST, ChatColor.GOLD + "Page " + (session.page + 1)));
         inventory.setItem(BACK_SLOT, createNavItem(Material.FLOWER_BANNER_PATTERN, Message.BUTTON_BACK.toString()));
         inventory.setItem(NEXT_SLOT, createNavItem(Material.ARROW, ChatColor.YELLOW + "Next Page"));
+        inventory.setItem(STOCKPILE_BROWSER_SLOT, createStockpileBrowseButton());
         fillBottomRowGlass(inventory);
         session.inventory = inventory;
         player.openInventory(inventory);
@@ -89,17 +92,20 @@ public class StockChestManager implements Listener {
     }
 
     private ItemStack createNavItem(Material material, String name) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            item.setItemMeta(meta);
-        }
-        return item;
+        return GuiDisplayItem.paperIconWithMeta(material, name, List.of());
+    }
+
+    private ItemStack createStockpileBrowseButton() {
+        List<String> lore = Message.BUTTON_STOCKPILE_BROWSER.getLore();
+        return GuiDisplayItem.paperIconWithMeta(
+                Material.RECOVERY_COMPASS,
+                Message.BUTTON_STOCKPILE_BROWSER.toString(),
+                lore.isEmpty() ? List.of() : lore);
     }
 
     private static boolean isBottomRowNavSlot(int slot) {
-        return slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT;
+        return slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT
+                || slot == STOCKPILE_BROWSER_SLOT;
     }
 
     /**
@@ -114,13 +120,7 @@ public class StockChestManager implements Listener {
     }
 
     private static ItemStack createBottomRowFillerPane() {
-        ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta meta = pane.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(" ");
-            pane.setItemMeta(meta);
-        }
-        return pane;
+        return GuiDisplayItem.paperIconWithMeta(Material.GRAY_STAINED_GLASS_PANE, " ", List.of());
     }
 
     private static boolean isBottomRowGlassSlot(int slot) {
@@ -156,9 +156,19 @@ public class StockChestManager implements Listener {
             return;
         }
 
-        if (slot == PREV_SLOT || slot == NEXT_SLOT || slot == INFO_SLOT || slot == BACK_SLOT) {
+        if (slot == PREV_SLOT || slot == NEXT_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == STOCKPILE_BROWSER_SLOT) {
             event.setCancelled(true);
             if (slot == INFO_SLOT) return;
+            if (slot == STOCKPILE_BROWSER_SLOT) {
+                if (event.getView().getCursor() != null && event.getView().getCursor().getType() != Material.AIR) {
+                    return;
+                }
+                player.playSound(player.getLocation(), Sound.BLOCK_COMPOSTER_FILL, SoundCategory.MASTER, 0.6f, 1.4f);
+                persistPage(session);
+                session.awaitingBrowseOpen = true;
+                player.closeInventory();
+                return;
+            }
             if (slot == BACK_SLOT) {
                 player.playSound(player, Sound.UI_LOOM_SELECT_PATTERN, SoundCategory.MASTER, 1f, 1f);
                 Bukkit.getScheduler().runTask(NormalShops.getInstance(), () -> {
@@ -200,7 +210,8 @@ public class StockChestManager implements Listener {
             return;
         }
         for (int slot : event.getRawSlots()) {
-            if (isBottomRowGlassSlot(slot) || slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT) {
+            if (isBottomRowGlassSlot(slot) || slot == PREV_SLOT || slot == INFO_SLOT || slot == BACK_SLOT || slot == NEXT_SLOT
+                    || slot == STOCKPILE_BROWSER_SLOT) {
                 event.setCancelled(true);
                 return;
             }
@@ -211,6 +222,31 @@ public class StockChestManager implements Listener {
     public void onClose(InventoryCloseEvent event) {
         Session session = sessions.get(event.getPlayer().getUniqueId());
         if (session == null || event.getInventory() != session.inventory) return;
+        if (session.awaitingBrowseOpen) {
+            session.awaitingBrowseOpen = false;
+            session.inventory = null;
+            if (event.getPlayer() instanceof Player player) {
+                Bukkit.getScheduler().runTask(NormalShops.getInstance(), () -> {
+                    if (!player.isOnline()) {
+                        sessions.remove(player.getUniqueId());
+                        return;
+                    }
+                    ItemShop fresh = ItemShop.get(session.shop.getLocation());
+                    if (fresh == null || fresh.isDeleted()) {
+                        sessions.remove(player.getUniqueId());
+                        player.sendMessage(ChatColor.RED + "Shop no longer exists.");
+                        return;
+                    }
+                    if (!hasManagementAccess(player, fresh)) {
+                        sessions.remove(player.getUniqueId());
+                        player.sendMessage(ChatColor.RED + "You no longer have access to this shop.");
+                        return;
+                    }
+                    NormalShops.getInstance().getStockpileViewManager().openBrowse(player, fresh, session.page);
+                });
+            }
+            return;
+        }
         if (event.getPlayer() instanceof Player player && hasManagementAccess(player, session.shop)) {
             persistPage(session);
         }
@@ -230,7 +266,7 @@ public class StockChestManager implements Listener {
         List<ItemStack> pageContents = new ArrayList<>(PAGE_SIZE);
         for (int i = 0; i < PAGE_SIZE; i++) {
             ItemStack item = session.inventory.getItem(i);
-            pageContents.add(item == null ? null : item.clone());
+            pageContents.add(item == null ? null : PhysicalItemProxy.unwrapForShop(item.clone()));
         }
         session.shop.setStockPageContents(session.page, PAGE_SIZE, pageContents);
         session.viewedRevision = session.shop.getStockRevision();
@@ -241,7 +277,7 @@ public class StockChestManager implements Listener {
             if (session.shop != shop || session.inventory == null) return;
             List<ItemStack> pageItems = session.shop.getStockPageContents(session.page, PAGE_SIZE);
             for (int i = 0; i < PAGE_SIZE; i++) {
-                session.inventory.setItem(i, pageItems.get(i));
+                session.inventory.setItem(i, PhysicalItemProxy.wrapForShopDisplay(pageItems.get(i)));
             }
             session.viewedRevision = session.shop.getStockRevision();
         });
@@ -259,7 +295,7 @@ public class StockChestManager implements Listener {
 
     private boolean enforceExclusiveViewer(ItemShop shop, UUID callerUUID) {
         List<Session> viewers = sessions.values().stream()
-                .filter(session -> session.shop.getLocation().equals(shop.getLocation()) && session.inventory != null)
+                .filter(session -> session.shop.getLocation().equals(shop.getLocation()))
                 .sorted((a, b) -> Long.compare(a.openedAt, b.openedAt))
                 .toList();
         if (viewers.size() <= 1) return true;
@@ -276,6 +312,33 @@ public class StockChestManager implements Listener {
             }
         }
         return winner.viewerUUID.equals(callerUUID);
+    }
+
+    /**
+     * Reopens the stock chest after closing the stockpile browse/peek flow (session must still exist).
+     */
+    public void resumeStockChest(Player player, ItemShop shop, int page) {
+        Session session = sessions.get(player.getUniqueId());
+        ItemShop fresh = ItemShop.get(shop.getLocation());
+        if (fresh == null || fresh.isDeleted()) {
+            player.sendMessage(ChatColor.RED + "Shop no longer exists.");
+            if (session != null) {
+                sessions.remove(player.getUniqueId());
+            }
+            return;
+        }
+        if (!hasManagementAccess(player, fresh)) {
+            player.sendMessage(ChatColor.RED + "You no longer have access to this shop.");
+            if (session != null) {
+                sessions.remove(player.getUniqueId());
+            }
+            return;
+        }
+        if (session == null) {
+            open(player, fresh);
+            return;
+        }
+        openPage(player, session, page, false);
     }
 
     private boolean hasManagementAccess(Player player, ItemShop shop) {
@@ -295,6 +358,7 @@ public class StockChestManager implements Listener {
         private Inventory inventory;
         private long viewedRevision;
         private final long openedAt;
+        private boolean awaitingBrowseOpen;
 
         private Session(UUID viewerUUID, ItemShop shop, int page) {
             this.viewerUUID = viewerUUID;

@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.settings;
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -18,10 +19,12 @@ public class NotificationsButton extends ShopButton {
         super(slot, shop);
         List<String> lore = Message.BUTTON_NOTIFICATIONS_ENABLED.getLore();
         enabled = createItem(
-                Message.BUTTON_NOTIFICATIONS_ENABLED.toString(), lore, Material.EMERALD, false
+                Message.BUTTON_NOTIFICATIONS_ENABLED.toString(), lore,
+                GuiIcons.material("settings.notifications-enabled", Material.EMERALD), false
         );
         disabled = createItem(
-                Message.BUTTON_NOTIFICATIONS_DISABLED.toString(), lore, Material.GRAY_DYE, false
+                Message.BUTTON_NOTIFICATIONS_DISABLED.toString(), lore,
+                GuiIcons.material("settings.notifications-disabled", Material.GRAY_DYE), false
         );
     }
 

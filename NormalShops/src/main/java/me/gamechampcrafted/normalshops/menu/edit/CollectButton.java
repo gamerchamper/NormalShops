@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.menu.edit;
 
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Parameterizer;
@@ -19,7 +20,8 @@ public class CollectButton extends ShopButton {
         super(slot, shop);
         this.item = createItem(
                 Message.BUTTON_COLLECT.toString(),
-                getEarningsLore(), Material.DIAMOND, false);
+                getEarningsLore(),
+                GuiIcons.material("owner.collect", Material.DIAMOND), false);
     }
 
     private final ItemStack item;

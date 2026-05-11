@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.menu.settings;
 
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -22,7 +23,8 @@ public class ClearStockpilesButton extends ShopButton {
     }
 
     private final ItemStack item = createItem(
-            Message.BUTTON_CLEAR_STOCKPILES, Material.TNT_MINECART, false
+            Message.BUTTON_CLEAR_STOCKPILES,
+            GuiIcons.material("settings.clear-stockpiles", Material.TNT_MINECART), false
     );
 
     @Override

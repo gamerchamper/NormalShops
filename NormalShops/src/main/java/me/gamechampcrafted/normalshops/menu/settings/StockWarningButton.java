@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.settings;
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -18,10 +19,12 @@ public class StockWarningButton extends ShopButton {
         super(slot, shop);
         List<String> lore = Message.BUTTON_STOCK_WARNING_ENABLED.getLore();
         enabled = createItem(
-                Message.BUTTON_STOCK_WARNING_ENABLED.toString(), lore, Material.BELL, false
+                Message.BUTTON_STOCK_WARNING_ENABLED.toString(), lore,
+                GuiIcons.material("settings.stock-warning-enabled", Material.BELL), false
         );
         disabled = createItem(
-                Message.BUTTON_STOCK_WARNING_DISABLED.toString(), lore, Material.GRAY_DYE, false
+                Message.BUTTON_STOCK_WARNING_DISABLED.toString(), lore,
+                GuiIcons.material("settings.stock-warning-disabled", Material.GRAY_DYE), false
         );
     }
 

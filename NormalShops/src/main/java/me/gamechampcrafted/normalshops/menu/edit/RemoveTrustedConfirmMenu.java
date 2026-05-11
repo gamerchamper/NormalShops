@@ -2,6 +2,8 @@ package me.gamechampcrafted.normalshops.menu.edit;
 
 import me.gamechampcrafted.normalshops.menu.Button;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
@@ -28,8 +30,8 @@ public class RemoveTrustedConfirmMenu extends ShopMenu {
 
     @Override
     protected void setupButtons() {
-        addButton(new ConfirmButton(11, getShop(), trustedUUID));
-        addButton(new CancelButton(15, getShop()));
+        addButton(new ConfirmButton(MenuSlotRegistry.slot("remove-trusted", "confirm", 11), getShop(), trustedUUID));
+        addButton(new CancelButton(MenuSlotRegistry.slot("remove-trusted", "cancel", 15), getShop()));
     }
 
     @Override
@@ -40,13 +42,6 @@ public class RemoveTrustedConfirmMenu extends ShopMenu {
     private static class ConfirmButton extends Button {
         private final ItemShop shop;
         private final UUID trustedUUID;
-        private final ItemStack item = createItem(
-                Utils.colorize("&a✔ &lCONFIRM REMOVE"),
-                Arrays.asList(Utils.colorize("&7Remove this player from trusted list.")),
-                Material.LIME_WOOL,
-                false
-        );
-
         private ConfirmButton(int slot, ItemShop shop, UUID trustedUUID) {
             super(slot);
             this.shop = shop;
@@ -55,7 +50,11 @@ public class RemoveTrustedConfirmMenu extends ShopMenu {
 
         @Override
         public ItemStack getItem() {
-            return item;
+            return createItem(
+                    Utils.colorize("&a✔ &lCONFIRM REMOVE"),
+                    Arrays.asList(Utils.colorize("&7Remove this player from trusted list.")),
+                    GuiIcons.material("remove-trusted.confirm", Material.LIME_WOOL),
+                    false);
         }
 
         @Override
@@ -82,13 +81,6 @@ public class RemoveTrustedConfirmMenu extends ShopMenu {
 
     private static class CancelButton extends Button {
         private final ItemShop shop;
-        private final ItemStack item = createItem(
-                Utils.colorize("&c✖ &lCANCEL"),
-                Arrays.asList(Utils.colorize("&7Return without removing.")),
-                Material.RED_WOOL,
-                false
-        );
-
         private CancelButton(int slot, ItemShop shop) {
             super(slot);
             this.shop = shop;
@@ -96,7 +88,11 @@ public class RemoveTrustedConfirmMenu extends ShopMenu {
 
         @Override
         public ItemStack getItem() {
-            return item;
+            return createItem(
+                    Utils.colorize("&c✖ &lCANCEL"),
+                    Arrays.asList(Utils.colorize("&7Return without removing.")),
+                    GuiIcons.material("remove-trusted.cancel", Material.RED_WOOL),
+                    false);
         }
 
         @Override

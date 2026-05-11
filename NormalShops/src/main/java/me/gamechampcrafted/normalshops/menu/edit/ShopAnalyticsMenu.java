@@ -5,7 +5,9 @@ import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.Button;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -33,7 +35,7 @@ public class ShopAnalyticsMenu extends ShopMenu {
     @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
-        addButton(new BackButton(36, new EditShopMenu(getPlayer(), shop)));
+        addButton(new BackButton(MenuSlotRegistry.slot("shop-analytics", "back", 36), new EditShopMenu(getPlayer(), shop)));
 
         long revenue = shop.getLifetimeRevenue();
         long sales = shop.getLifetimeSales();
@@ -50,7 +52,7 @@ public class ShopAnalyticsMenu extends ShopMenu {
         long conversionRate = impressions <= 0 ? 0 : (sales * 100L) / impressions;
 
         List<CoreProtectLogger.HistoryEntry> realBuys = shop.getHistoryEntries().stream()
-                .filter(entry -> "SHOP_BUY".equals(entry.action()))
+                .filter(ShopAnalyticsMenu::isRecordedPurchase)
                 .toList();
         Set<String> uniqueBuyers = realBuys.stream()
                 .map(CoreProtectLogger.HistoryEntry::actor)
@@ -71,44 +73,69 @@ public class ShopAnalyticsMenu extends ShopMenu {
                         LinkedHashMap::new
                 ));
 
-        addButton(infoButton(10, Material.EMERALD, "&a&lLifetime Revenue",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "revenue", 10),
+                GuiIcons.material("shop-analytics.revenue", Material.EMERALD), "&a&lLifetime Revenue",
                 "&7Total: &a" + fmt(revenue)));
-        addButton(infoButton(11, Material.GOLD_INGOT, "&6&lTotal Sales",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "sales", 11),
+                GuiIcons.material("shop-analytics.sales", Material.GOLD_INGOT), "&6&lTotal Sales",
                 "&7Count: &e" + fmt(sales)));
-        addButton(infoButton(12, Material.CHEST, "&e&lProducts Sold",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "products-sold", 12),
+                GuiIcons.material("shop-analytics.products-sold", Material.CHEST), "&e&lProducts Sold",
                 "&7Units: &f" + fmt(productsSold)));
-        addButton(infoButton(13, Material.ENDER_EYE, "&d&lTotal Impressions",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "impressions", 13),
+                GuiIcons.material("shop-analytics.impressions", Material.ENDER_EYE), "&d&lTotal Impressions",
                 "&7Views: &d" + fmt(impressions)));
 
-        addButton(infoButton(14, Material.LIME_DYE, "&a&lStock Added",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "stock-added", 14),
+                GuiIcons.material("shop-analytics.stock-added", Material.LIME_DYE), "&a&lStock Added",
                 "&7Units: &a+" + fmt(stockAdded)));
-        addButton(infoButton(15, Material.RED_DYE, "&c&lStock Removed",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "stock-removed", 15),
+                GuiIcons.material("shop-analytics.stock-removed", Material.RED_DYE), "&c&lStock Removed",
                 "&7Units: &c-" + fmt(stockRemoved)));
-        addButton(infoButton(16, Material.HOPPER, "&b&lCurrent Internal Stock",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "internal-stock", 16),
+                GuiIcons.material("shop-analytics.internal-stock", Material.HOPPER), "&b&lCurrent Internal Stock",
                 "&7Units: &b" + fmt(internalStock)));
 
-        addButton(infoButton(28, Material.PAPER, "&f&lAvg Revenue / Sale",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "avg-revenue", 28),
+                GuiIcons.material("shop-analytics.avg-revenue", Material.PAPER), "&f&lAvg Revenue / Sale",
                 "&7Amount: &f" + fmt(avgRevenuePerSale)));
-        addButton(infoButton(29, Material.BOOK, "&f&lAvg Items / Sale",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "avg-items", 29),
+                GuiIcons.material("shop-analytics.avg-items", Material.BOOK), "&f&lAvg Items / Sale",
                 "&7Items: &f" + fmt(avgItemsPerSale)));
-        addButton(infoButton(30, Material.CLOCK, "&d&lStock Utilization",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "utilization", 30),
+                GuiIcons.material("shop-analytics.utilization", Material.CLOCK), "&d&lStock Utilization",
                 "&7Sold vs Added: &d" + fmt(stockUtilization) + "%"));
-        addButton(infoButton(31, Material.TARGET, "&a&lImpression -> Buy Ratio",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "conversion", 31),
+                GuiIcons.material("shop-analytics.conversion", Material.TARGET), "&a&lImpression -> Buy Ratio",
                 "&7Conversion: &a" + fmt(conversionRate) + "%"));
 
         String netColor = stockNet >= 0 ? "&a+" : "&c";
-        addButton(infoButton(32, Material.COMPARATOR, "&9&lNet Stock Change",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "net-stock", 32),
+                GuiIcons.material("shop-analytics.net-stock", Material.COMPARATOR), "&9&lNet Stock Change",
                 "&7Net: " + netColor + fmt(stockNet)));
-        addButton(infoButton(33, Material.PLAYER_HEAD, "&b&lUnique Buyers",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "unique-buyers", 33),
+                GuiIcons.material("shop-analytics.unique-buyers", Material.PLAYER_HEAD), "&b&lUnique Buyers",
                 "&7Players: &b" + fmt(uniqueBuyers.size())));
-        addButton(infoButton(34, Material.WRITABLE_BOOK, "&6&lTop Buyers",
+        addButton(infoButton(MenuSlotRegistry.slot("shop-analytics", "top-buyers", 34),
+                GuiIcons.material("shop-analytics.top-buyers", Material.WRITABLE_BOOK), "&6&lTop Buyers",
                 buildTopBuyerLore(topBuyers)));
-        addButton(new MarketComparisonButton(41, shop, buildMarketComparisonLore(shop)));
+        addButton(new MarketComparisonButton(MenuSlotRegistry.slot("shop-analytics", "market-compare", 40), shop, buildMarketComparisonLore(shop)));
+    }
+
+    @Override
+    protected void onAfterPlaceButtons() {
+        paintRegisteredLayoutFillers("shop-analytics");
     }
 
     @Override
     protected boolean enforceManagementAccess() {
         return true;
+    }
+
+    /** Classic GUI buys {@code SHOP_BUY}; merchant UI {@code SHOP_BUY_VILLAGER}; admin emulate {@code SHOP_BUY_EMULATED}. */
+    private static boolean isRecordedPurchase(CoreProtectLogger.HistoryEntry entry) {
+        String a = entry.action();
+        return "SHOP_BUY".equals(a) || "SHOP_BUY_VILLAGER".equals(a) || "SHOP_BUY_EMULATED".equals(a);
     }
 
     private Button infoButton(int slot, Material icon, String title, String line) {

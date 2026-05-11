@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.menu.delete;
 
 import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.data.Message;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -11,16 +12,23 @@ import org.bukkit.inventory.ItemStack;
 
 public class DeleteShopButton extends ShopButton {
 
+    private final String iconKey;
+
+    /** Owner-facing delete confirmation — icons.delete-shop-player.delete */
     public DeleteShopButton(int slot, ItemShop shop) {
-        super(slot, shop);
+        this(slot, shop, "delete-shop-player.delete");
     }
 
-    private final ItemStack item =
-            createItem(Message.BUTTON_DELETE_SHOP, Material.BARRIER, false);
+    /** Pass full dotted path under {@code icons} (e.g. {@code delete-shop-admin.delete}). */
+    public DeleteShopButton(int slot, ItemShop shop, String iconKey) {
+        super(slot, shop);
+        this.iconKey = iconKey;
+    }
 
     @Override
     public ItemStack getItem() {
-        return item;
+        return createItem(Message.BUTTON_DELETE_SHOP,
+                GuiIcons.material(iconKey, Material.BARRIER), false);
     }
 
     @Override

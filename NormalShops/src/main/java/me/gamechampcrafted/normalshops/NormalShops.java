@@ -1,10 +1,13 @@
 package me.gamechampcrafted.normalshops;
 
 import me.gamechampcrafted.normalshops.commands.NormalShopsCommand;
+import me.gamechampcrafted.normalshops.commands.SetPointCommand;
+import me.gamechampcrafted.normalshops.commands.ShopsCommand;
 import me.gamechampcrafted.normalshops.shop.TradingMenuManager;
 import me.gamechampcrafted.normalshops.data.DataManager;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Setting;
+import me.gamechampcrafted.normalshops.menu.GuiDisplayItemLeakTask;
 import me.gamechampcrafted.normalshops.data.YAMLDataManager;
 import me.gamechampcrafted.normalshops.events.*;
 import me.gamechampcrafted.normalshops.menu.MenuListener;
@@ -13,20 +16,25 @@ import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.shop.Pile;
 import me.gamechampcrafted.normalshops.shop.PlayerShopManager;
 import me.gamechampcrafted.normalshops.shop.ShopBackupService;
+import me.gamechampcrafted.normalshops.shop.PrivateShopStatsHologramManager;
 import me.gamechampcrafted.normalshops.shop.ShopManager;
 import me.gamechampcrafted.normalshops.shop.EarningsChestManager;
 import me.gamechampcrafted.normalshops.shop.StockChestManager;
+import me.gamechampcrafted.normalshops.shop.PhysicalItemProxyResolveTask;
+import me.gamechampcrafted.normalshops.shop.StockpileViewManager;
 import me.gamechampcrafted.normalshops.backup.ShopDataAutoBackup;
 import me.gamechampcrafted.normalshops.shop.connector.ConnectorManager;
 import me.gamechampcrafted.normalshops.shop.display.FrameDisplay;
 import me.gamechampcrafted.normalshops.shop.display.GlassDisplay;
 import me.gamechampcrafted.normalshops.shop.display.HintOnlyDisplay;
+import me.gamechampcrafted.normalshops.update.ModrinthUpdateService;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.jetbrains.annotations.Nullable;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,6 +89,10 @@ public final class NormalShops extends JavaPlugin {
         registerCommands();
         CoreProtectLogger.initialize();
 
+        if (Setting.CHECK_UPDATE.isEnabled()) {
+            ModrinthUpdateService.get().checkAsync(this);
+        }
+
         Runnable refreshOutOfStockDisplays = () -> {
             if (shopManager != null) {
                 shopManager.refreshAllOutOfStockDisplays();
@@ -91,6 +103,18 @@ public final class NormalShops extends JavaPlugin {
         Bukkit.getScheduler().runTaskLater(this, refreshOutOfStockDisplays, 20L);
         Bukkit.getScheduler().runTaskLater(this, refreshOutOfStockDisplays, 100L);
 
+        int guiLeakSweepTicks = Setting.GUI_ITEM_LEAK_SWEEP_TICKS.getInt();
+        if (guiLeakSweepTicks > 0) {
+            guiDisplayItemLeakTask = Bukkit.getScheduler().runTaskTimer(
+                    this, new GuiDisplayItemLeakTask(), guiLeakSweepTicks, guiLeakSweepTicks);
+        }
+
+        int physicalProxyTicks = Setting.PHYSICAL_ITEM_PROXY_RESOLVE_TICKS.getInt();
+        if (physicalProxyTicks > 0) {
+            physicalItemProxyResolveTask = Bukkit.getScheduler().runTaskTimer(
+                    this, new PhysicalItemProxyResolveTask(), physicalProxyTicks, physicalProxyTicks);
+        }
+
         getLogger().info("NormalShops enabled.");
     }
 
@@ -99,11 +123,23 @@ public final class NormalShops extends JavaPlugin {
         if (menuListener != null) menuListener.closeActiveMenus();
         if (connectorManager != null) connectorManager.cancelAllConnections();
         if (tradingMenuManager != null) tradingMenuManager.closeAllSessions();
+        if (stockpileViewManager != null) stockpileViewManager.closeAllSessions();
         if (stockChestManager != null) stockChestManager.closeAllSessions();
         if (earningsChestManager != null) earningsChestManager.closeAllSessions();
         if (shopHistoryMenuManager != null) shopHistoryMenuManager.closeAllSessions();
+        if (privateShopStatsHologramManager != null) {
+            privateShopStatsHologramManager.shutdown();
+        }
         if (shopDataAutoBackup != null) {
             shopDataAutoBackup.shutdown();
+        }
+        if (guiDisplayItemLeakTask != null) {
+            guiDisplayItemLeakTask.cancel();
+            guiDisplayItemLeakTask = null;
+        }
+        if (physicalItemProxyResolveTask != null) {
+            physicalItemProxyResolveTask.cancel();
+            physicalItemProxyResolveTask = null;
         }
         saveData();
         getLogger().info("NormalShops disabled.");
@@ -114,9 +150,12 @@ public final class NormalShops extends JavaPlugin {
         connectorManager = new ConnectorManager();
         chatInputListener = new ChatInputListener(this);
         tradingMenuManager = new TradingMenuManager();
+        stockpileViewManager = new StockpileViewManager(this);
         stockChestManager = new StockChestManager();
         earningsChestManager = new EarningsChestManager();
         shopHistoryMenuManager = new ShopHistoryMenuManager();
+        privateShopStatsHologramManager = new PrivateShopStatsHologramManager(this);
+        privateShopStatsHologramManager.start();
     }
 
     private void registerCommands() {
@@ -125,12 +164,18 @@ public final class NormalShops extends JavaPlugin {
         getCommand("normalshops").setTabCompleter(command);
         getCommand("viewshops").setExecutor(command);
         getCommand("viewshops").setTabCompleter(command);
+        ShopsCommand shopsCommand = new ShopsCommand();
+        getCommand("shops").setExecutor(shopsCommand);
+        getCommand("shops").setTabCompleter(shopsCommand);
+        SetPointCommand setPointCommand = new SetPointCommand();
+        getCommand("setpoint").setExecutor(setPointCommand);
     }
 
     private void registerAllEvents() {
         registerEvents(
                 menuListener,
                 tradingMenuManager,
+                stockpileViewManager,
                 stockChestManager,
                 earningsChestManager,
                 shopHistoryMenuManager,
@@ -145,7 +190,8 @@ public final class NormalShops extends JavaPlugin {
                 new StockpileBreakEvent(),
                 new StockpileInventoryListener(),
                 new JoinEvent(),
-                new ExplodeEvent()
+                new ExplodeEvent(),
+                privateShopStatsHologramManager
         );
 
         if (Setting.PROTECT_STOCKPILES.isEnabled()) {
@@ -275,6 +321,12 @@ public final class NormalShops extends JavaPlugin {
         return tradingMenuManager;
     }
 
+    private StockpileViewManager stockpileViewManager;
+
+    public StockpileViewManager getStockpileViewManager() {
+        return stockpileViewManager;
+    }
+
     private StockChestManager stockChestManager;
 
     public StockChestManager getStockChestManager() {
@@ -292,4 +344,16 @@ public final class NormalShops extends JavaPlugin {
     public ShopHistoryMenuManager getShopHistoryMenuManager() {
         return shopHistoryMenuManager;
     }
+
+    private PrivateShopStatsHologramManager privateShopStatsHologramManager;
+
+    public PrivateShopStatsHologramManager getPrivateShopStatsHologramManager() {
+        return privateShopStatsHologramManager;
+    }
+
+    @Nullable
+    private BukkitTask guiDisplayItemLeakTask;
+
+    @Nullable
+    private BukkitTask physicalItemProxyResolveTask;
 }

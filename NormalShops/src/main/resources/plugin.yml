@@ -44,18 +44,42 @@ permissions:
   normalshops.reload:
     description: Allows reloading NormalShops config and messages.
     default: op
+  normalshops.version:
+    description: View NormalShops version and Modrinth update status (/normalshops version).
+    default: true
+  normalshops.update-notify:
+    description: Receive chat notifications when a newer NormalShops release is on Modrinth (also ops).
+    default: op
+  normalshops.stats-holograms:
+    description: List or clean up private stock/earnings TextDisplay holograms (/normalshops stats-holograms).
+    default: op
   normalshops.restore:
     description: Restore a shop from shop-backups.yml onto the block you stand on.
     default: op
   normalshops.viewshops:
     description: Open the GUI listing shops you own or are trusted on (remote access).
     default: true
+  normalshops.shops:
+    description: Open the GUI listing in-stock shops and teleport to them.
+    default: true
+  normalshops.region:
+    description: Define /shops menu regions (/normalshops region make + /setpoint).
+    default: op
 commands:
   normalshops:
     description: Main NormalShops command
     aliases: [ nshops ]
-    usage: /<command> view | /<command> reload | /<command> delete | /<command> restore
+    usage: /<command> view | /<command> reload | /<command> version | /<command> delete | /<command> restore | /<command> stats-holograms list|cleanup | /<command> region make|cancel
   viewshops:
     description: List your shops and open them remotely (same as /normalshops view).
     aliases: [ ]
     permission: normalshops.viewshops
+  shops:
+    description: Browse in-stock shops and teleport. Use /shops <item> or /shops item <item> to filter by product.
+    aliases: [ ]
+    permission: normalshops.shops
+    usage: /<command> [item <item name>]
+  setpoint:
+    description: Set a corner for the /shops menu region — two points define the XZ rectangle (after /normalshops region make).
+    aliases: [ ]
+    permission: normalshops.region

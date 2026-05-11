@@ -1,5 +1,6 @@
 package me.gamechampcrafted.normalshops.menu.delete;
 
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.menu.edit.EditShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
@@ -24,7 +25,8 @@ public class ForceEditButton extends ShopButton {
                 Utils.colorize("&7Force-open the owner shop editor."),
                 Utils.colorize("&7You can modify all shop settings.")
         );
-        return createItem(Utils.colorize("&6🛠 &lFORCE EDIT SHOP"), lore, Material.COMMAND_BLOCK, false);
+        return createItem(Utils.colorize("&6🛠 &lFORCE EDIT SHOP"), lore,
+                GuiIcons.material("delete-shop-admin.force-edit", Material.COMMAND_BLOCK), false);
     }
 
     @Override

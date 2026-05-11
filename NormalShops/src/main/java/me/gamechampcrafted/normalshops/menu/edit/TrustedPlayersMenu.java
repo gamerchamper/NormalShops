@@ -4,7 +4,9 @@ import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.Button;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.Utils;
@@ -35,12 +37,13 @@ public class TrustedPlayersMenu extends ShopMenu {
     @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
-        addButton(new BackButton(36, new EditShopMenu(getPlayer(), shop)));
-        addButton(new AddTrustedPlayerButton(38, shop));
+        List<Integer> entrySlots = MenuSlotRegistry.slots("trusted-players", "entry", LIST_SLOTS);
+        addButton(new BackButton(MenuSlotRegistry.slot("trusted-players", "back", 36), new EditShopMenu(getPlayer(), shop)));
+        addButton(new AddTrustedPlayerButton(MenuSlotRegistry.slot("trusted-players", "add-player", 38), shop));
 
         List<UUID> trustedPlayers = new ArrayList<>(shop.getTrustedPlayers());
-        for (int i = 0; i < LIST_SLOTS.size() && i < trustedPlayers.size(); i++) {
-            addButton(new TrustedPlayerEntryButton(LIST_SLOTS.get(i), shop, trustedPlayers.get(i)));
+        for (int i = 0; i < entrySlots.size() && i < trustedPlayers.size(); i++) {
+            addButton(new TrustedPlayerEntryButton(entrySlots.get(i), shop, trustedPlayers.get(i)));
         }
     }
 
@@ -62,7 +65,7 @@ public class TrustedPlayersMenu extends ShopMenu {
                             Utils.colorize("&7Type a username in chat."),
                             Utils.colorize("&7They will get trusted access.")
                     ),
-                    Material.LIME_DYE,
+                    GuiIcons.material("trusted-players.add-player", Material.LIME_DYE),
                     false
             );
         }

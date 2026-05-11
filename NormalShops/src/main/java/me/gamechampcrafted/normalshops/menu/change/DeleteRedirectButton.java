@@ -1,6 +1,7 @@
 package me.gamechampcrafted.normalshops.menu.change;
 
 import me.gamechampcrafted.normalshops.data.Message;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Material;
@@ -15,7 +16,8 @@ public class DeleteRedirectButton extends ShopButton {
     }
 
     private final ItemStack item = createItem(
-            Message.BUTTON_DELETE_REDIRECT, Material.BARRIER, false
+            Message.BUTTON_DELETE_REDIRECT,
+            GuiIcons.material("trading.delete-listing", Material.BARRIER), false
     );
 
     @Override

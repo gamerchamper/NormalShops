@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class Button {
@@ -52,16 +53,18 @@ public abstract class Button {
     }
 
     protected static ItemStack createItem(String name, List<String> lore, Material mat, boolean enchanted) {
-        ItemStack item = new ItemStack(mat);
+        Material visual = mat != null && !mat.isAir() ? mat : Material.PAPER;
+        ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(name);
         meta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
-        meta.setLore(lore);
+        meta.setLore(lore != null ? lore : Collections.emptyList());
         if (enchanted) {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             meta.addEnchant(Enchantment.DURABILITY, 1, true);
         }
         item.setItemMeta(meta);
+        GuiDisplayItem.applyVanillaItemModelToPaper(item, visual.getKey());
         return item;
     }
 

@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.change;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.menu.delete.DeleteShopButton;
@@ -28,8 +29,9 @@ public class PlayerDeleteShopMenu extends ShopMenu {
 
     @Override
     protected void setupButtons() {
-        addButton(new DeleteShopButton(13, getShop()));
-        addButton(new BackButton(18, new ChangeShopMenu(getPlayer(), getShop())));
+        addButton(new DeleteShopButton(MenuSlotRegistry.slot("delete-shop-player", "delete", 13), getShop()));
+        addButton(new BackButton(MenuSlotRegistry.slot("delete-shop-player", "back", 18),
+                new ChangeShopMenu(getPlayer(), getShop())));
     }
 
     @Override

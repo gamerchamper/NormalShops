@@ -1,5 +1,6 @@
 package me.gamechampcrafted.normalshops.data;
 
+import me.gamechampcrafted.normalshops.EmbeddedBundledDefaults;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -7,8 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class YAMLDataManager implements DataManager {
 
@@ -25,7 +27,7 @@ public class YAMLDataManager implements DataManager {
     }
 
     /**
-     * @param pathTrimBase directory prefix used with {@link Plugin#saveResource(String, boolean)} path derivation (see {@link #getTrimmedPath()})
+     * @param pathTrimBase directory prefix stripped when resolving the bundled jar path (see {@link #getTrimmedPath()})
      */
     public YAMLDataManager(Plugin plugin, @NotNull File directory, String fileName, @NotNull File pathTrimBase) throws IOException {
         this.plugin = plugin;
@@ -67,21 +69,21 @@ public class YAMLDataManager implements DataManager {
 
     private void saveDefaultConfig() throws IOException {
         String path = getTrimmedPath();
-        try {
-            plugin.saveResource(path, false);
-        } catch (IllegalArgumentException exception) {
-            if (!file.createNewFile()) throw new IOException("Failed to create file: " + file.getPath());
-        }
-
-        config = YamlConfiguration.loadConfiguration(file);
-        InputStream defaultStream = plugin.getResource(path);
-
-        if (defaultStream != null) {
-            YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream));
+        String embedded = EmbeddedBundledDefaults.yamlDefaultForPath(path);
+        if (embedded != null) {
+            Files.writeString(file.toPath(), embedded, StandardCharsets.UTF_8);
+            config = YamlConfiguration.loadConfiguration(file);
+            YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new StringReader(embedded));
             config.setDefaults(defaultConfig);
             saveConfig();
-            defaultStream.close();
+            return;
         }
+
+        plugin.getLogger().warning("[NormalShops] No embedded default for \"" + path + "\" — creating empty file.");
+        if (!file.createNewFile()) {
+            throw new IOException("Failed to create file: " + file.getPath());
+        }
+        config = YamlConfiguration.loadConfiguration(file);
     }
 
     private String getTrimmedPath() {

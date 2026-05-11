@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.menu.create;
 
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.Button;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -14,7 +15,8 @@ public class ProductButton extends Button {
     }
 
     private final ItemStack item = createItem(
-            Message.BUTTON_PRODUCT, Material.LIGHT_GRAY_STAINED_GLASS_PANE, false
+            Message.BUTTON_PRODUCT,
+            GuiIcons.material("trading.product-empty", Material.LIGHT_GRAY_STAINED_GLASS_PANE), false
     );
 
     @Override

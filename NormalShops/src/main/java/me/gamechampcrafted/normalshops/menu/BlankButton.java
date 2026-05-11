@@ -16,6 +16,11 @@ public class BlankButton extends Button {
     private final ItemStack item =
             createItem(Message.BLANK, Material.GRAY_STAINED_GLASS_PANE, false);
 
+    /** Pane stack for gui.yml layout filler slots (blank name, no lore). */
+    public static ItemStack fillerStack(Material material) {
+        return createItem(Message.BLANK, material, false);
+    }
+
     @Override
     public ItemStack getItem() {
         return item;

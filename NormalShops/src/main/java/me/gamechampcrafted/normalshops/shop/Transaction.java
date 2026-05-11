@@ -4,6 +4,7 @@ import me.gamechampcrafted.normalshops.CoreProtectLogger;
 import me.gamechampcrafted.normalshops.Debug;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
+import me.gamechampcrafted.normalshops.data.Setting;
 import me.gamechampcrafted.normalshops.utils.HoverableMessageParametizer;
 import me.gamechampcrafted.normalshops.utils.MessageParametizer;
 import me.gamechampcrafted.normalshops.utils.ShopSaleNotify;
@@ -21,6 +22,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class Transaction {
+
+    private static void grantProduct(Player buyer, ItemStack product) {
+        if (PhysicalItemProxy.isProxyEnabled()) {
+            for (ItemStack part : PhysicalItemProxy.wrapPlayerGrant(product.clone())) {
+                Utils.addItem(buyer, part);
+            }
+        } else {
+            Utils.addItem(buyer, product);
+        }
+    }
+
     private final Player buyer;
     private final ItemShop shop;
 
@@ -58,31 +70,38 @@ public class Transaction {
             return false;
         }
 
+        int cooldownSec = Setting.BUY_COOLDOWN_SECONDS.getInt();
+        Integer waitSec = ShopPurchaseCooldown.blockingRemaining(buyer, shop.getLocation(), cooldownSec);
+        if (waitSec != null) {
+            Message.BUY_COOLDOWN.parameterizer().put("seconds", String.valueOf(waitSec)).send(buyer);
+            buyer.closeInventory();
+            return false;
+        }
+
         //Do transaction
         if (!shop.isAdminShop()) {
             products.forEach(product -> {
                 if (shop.removeInternalStock(product, product.getAmount())) {
                     shop.recordProductsSold(product.getAmount());
-                    Utils.addItem(buyer, product);
+                    grantProduct(buyer, product);
                     return;
                 }
                 Inventory from = shop.getNextStockedInventory();
                 if (from != null && ItemShop.removeMatchingItems(from, product, product.getAmount())) {
                     shop.recordProductsSold(product.getAmount());
-                    Utils.addItem(buyer, product);
+                    grantProduct(buyer, product);
                     return;
                 }
                 throw new IllegalStateException("Stock did not have enough items!");
             });
         } else {
             // Skip removing item if admin shop
-            products.forEach(product -> {
-                Utils.addItem(buyer, product);
-            });
+            products.forEach(product -> grantProduct(buyer, product));
         }
         ItemShop.removeMatchingItems(buyer.getInventory(), price, price.getAmount());
         shop.incrementEarnings();
         shop.saveData();
+        ShopPurchaseCooldown.record(buyer, shop.getLocation());
 
         // Log the transaction
                 Player owner = Bukkit.getPlayer(shop.getOwnerUUID());

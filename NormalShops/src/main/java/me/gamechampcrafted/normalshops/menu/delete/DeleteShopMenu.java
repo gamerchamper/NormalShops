@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.delete;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.BackButton;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.MenuSlotRegistry;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.menu.edit.EditShopMenu;
@@ -27,13 +28,14 @@ public class DeleteShopMenu extends ShopMenu {
 
     @Override
     protected void setupButtons() {
-        addButton(new ForceChangeOwnerButton(9, getShop()));
-        addButton(new ForceEditButton(11, getShop()));
-        addButton(new DeleteShopButton(13, getShop()));
-        addButton(new ShopHistoryButton(15, getShop()));
+        addButton(new ForceChangeOwnerButton(MenuSlotRegistry.slot("delete-shop-admin", "force-change-owner", 9), getShop()));
+        addButton(new ForceEditButton(MenuSlotRegistry.slot("delete-shop-admin", "force-edit", 11), getShop()));
+        addButton(new DeleteShopButton(MenuSlotRegistry.slot("delete-shop-admin", "delete", 13), getShop(),
+                "delete-shop-admin.delete"));
+        addButton(new ShopHistoryButton(MenuSlotRegistry.slot("delete-shop-admin", "history", 15), getShop()));
         // If deleter is the owner
         if (getShop().isOwner(getPlayer())) {
-            addButton(new BackButton(18, new EditShopMenu(getPlayer(), getShop())));
+            addButton(new BackButton(MenuSlotRegistry.slot("delete-shop-admin", "back", 18), new EditShopMenu(getPlayer(), getShop())));
         }
     }
 

@@ -3,6 +3,8 @@ package me.gamechampcrafted.normalshops.menu.edit;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Permission;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.Menu;
+import me.gamechampcrafted.normalshops.menu.ShopGuiLayout;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.ChatColor;
@@ -30,15 +32,20 @@ public class EditShopMenu extends ShopMenu {
     @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
-        addButton(new ChangeShopButton(19, shop));
-        addButton(new CollectButton(13, shop));
-        addButton(new CustomizeButton(25, shop));
-        addButton(new ConnectStockpileButton(30, shop));
-        addButton(new StockChestButton(32, shop));
-        addButton(new SettingsButton(22, shop));
-        addButton(new AnalyticsDashboardButton(40, shop));
-        addButton(new TrustedPlayersButton(36, shop));
-        addButton(new ShopInfoButton(44, shop));
+        addButton(new ChangeShopButton(Menu.ownerChangeListingSlot(), shop));
+        addButton(new CollectButton(Menu.ownerCollectSlot(), shop));
+        addButton(new CustomizeButton(Menu.ownerCustomizeSlot(), shop));
+        addButton(new ConnectStockpileButton(Menu.ownerConnectStockpileSlot(), shop));
+        addButton(new StockChestButton(Menu.ownerStockChestSlot(), shop));
+        addButton(new SettingsButton(Menu.ownerSettingsSlot(), shop));
+        addButton(new AnalyticsDashboardButton(Menu.ownerAnalyticsSlot(), shop));
+        addButton(new TrustedPlayersButton(Menu.ownerTrustedPlayersSlot(), shop));
+        addButton(new ShopInfoButton(Menu.ownerShopInfoSlot(), shop));
+    }
+
+    @Override
+    protected void onAfterPlaceButtons() {
+        paintLayoutFillers("owner", ShopGuiLayout.get().ownerFillerSlots());
     }
 
     @Override

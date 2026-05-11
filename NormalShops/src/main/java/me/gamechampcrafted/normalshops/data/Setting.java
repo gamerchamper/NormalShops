@@ -2,9 +2,12 @@ package me.gamechampcrafted.normalshops.data;
 
 import me.gamechampcrafted.normalshops.Logger;
 import me.gamechampcrafted.normalshops.NormalShops;
+import me.gamechampcrafted.normalshops.menu.ShopGuiLayout;
+import me.gamechampcrafted.normalshops.menu.view.ShopsMenuRegions;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,7 +54,58 @@ public enum Setting {
     AUTO_DATA_BACKUP_INTERVAL_MINUTES(10),
 
     /** Number of timestamp folders under {@code backups/auto/} to retain. */
-    AUTO_DATA_BACKUP_MAX_SNAPSHOTS(48);
+    AUTO_DATA_BACKUP_MAX_SNAPSHOTS(48),
+
+    /** Seconds between /shops teleports (0 disables cooldown). */
+    SHOPS_MENU_TELEPORT_COOLDOWN_SECONDS(30),
+
+    /** When false, /shops is disabled (config toggle). */
+    SHOPS_COMMAND_ENABLED(true),
+
+    /**
+     * Text displays above shops showing stock and pending earnings, only for the owner and trusted players
+     * (hidden from everyone else via per-player entity visibility).
+     */
+    PRIVATE_SHOP_STATS_HOLOGRAMS(false),
+
+    /**
+     * Ticks between automatic scans that remove stacked/drifted private stats {@link org.bukkit.entity.TextDisplay}s
+     * near registered shops (loaded chunks). 0 disables. Default 40 (~2s at 20 TPS).
+     */
+    STATS_HOLOGRAM_AUTO_CLEANUP_TICKS(40),
+
+    /**
+     * Seconds between purchases from the same shop block (classic buy GUI + villager merchant). 0 disables.
+     */
+    BUY_COOLDOWN_SECONDS(10),
+
+    /**
+     * Ticks between scans that remove leaked GUI “fake” items (paper + item model) from player/ender inventories.
+     * Each such item stores a unique id in {@link org.bukkit.persistence.PersistentDataContainer} (item NBT / custom data).
+     * 0 disables the sweeper.
+     */
+    GUI_ITEM_LEAK_SWEEP_TICKS(100),
+
+    /**
+     * When true, internal stock/earnings GUI slots and items bought/collected show as paper + item_model with a ledger id;
+     * player-held proxies resolve to real items when totals match (see {@code physical-item-proxy-resolve-ticks}).
+     */
+    PHYSICAL_ITEM_PROXY_ENABLED(false),
+
+    /**
+     * Max units per proxy stack when granting items to players (earnings collection); larger withdrawals split into multiple stacks.
+     */
+    PHYSICAL_ITEM_PROXY_MAX_UNITS_PER_STACK(64),
+
+    /**
+     * Ticks between scans that convert/truncate physical proxy items in player/ender inventories (0 = disabled).
+     */
+    PHYSICAL_ITEM_PROXY_RESOLVE_TICKS(20),
+
+    /**
+     * When true, queries the Modrinth API on startup ({@code check-update}) and notifies ops if a newer release exists.
+     */
+    CHECK_UPDATE(true);
 
     private static SettingManager manager;
     private final Object defaultValue;
@@ -64,10 +118,16 @@ public enum Setting {
         if (manager == null) {
             manager = new SettingManager(NormalShops.getInstance(), NormalShops.getInstance().getResolvedDataFolder());
         }
+        GuiConfigManager.initialize();
+        ShopsMenuRegions.reload(manager.getDataManager().getConfig());
+        ShopGuiLayout.reload();
     }
 
     public static void reload() throws IOException {
         manager = new SettingManager(NormalShops.getInstance(), NormalShops.getInstance().getResolvedDataFolder());
+        GuiConfigManager.reload();
+        ShopsMenuRegions.reload(manager.getDataManager().getConfig());
+        ShopGuiLayout.reload();
     }
 
     public static void saveSettings() {
@@ -227,6 +287,16 @@ public enum Setting {
             return (Boolean) coerced;
         }
         return cfg.getBoolean(path, def);
+    }
+
+    /** Mutable plugin {@code config.yml}; {@code null} only before settings initialize. */
+    @Nullable
+    public static FileConfiguration getConfig() {
+        if (manager == null) {
+            Logger.severe("SettingManager is null.");
+            return null;
+        }
+        return manager.getDataManager().getConfig();
     }
 
     private String path;

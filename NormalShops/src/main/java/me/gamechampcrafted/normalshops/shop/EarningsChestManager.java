@@ -2,6 +2,7 @@ package me.gamechampcrafted.normalshops.shop;
 
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Permission;
+import me.gamechampcrafted.normalshops.menu.GuiDisplayItem;
 import me.gamechampcrafted.normalshops.menu.edit.EditShopMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -17,8 +18,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +69,7 @@ public class EarningsChestManager implements Listener {
         Inventory inventory = Bukkit.createInventory(null, 54, getPageTitle(session.page));
         List<ItemStack> pageItems = session.shop.getEarningsPageContents(session.page, PAGE_SIZE);
         for (int i = 0; i < PAGE_SIZE; i++) {
-            inventory.setItem(i, pageItems.get(i));
+            inventory.setItem(i, PhysicalItemProxy.wrapForShopDisplay(pageItems.get(i)));
         }
         inventory.setItem(PREV_SLOT, createNavItem(Material.ARROW, ChatColor.YELLOW + "Previous Page"));
         inventory.setItem(INFO_SLOT, createNavItem(Material.GOLD_INGOT, ChatColor.GOLD + "Page " + (session.page + 1)));
@@ -86,13 +85,7 @@ public class EarningsChestManager implements Listener {
     }
 
     private ItemStack createNavItem(Material material, String name) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            item.setItemMeta(meta);
-        }
-        return item;
+        return GuiDisplayItem.paperIconWithMeta(material, name, List.of());
     }
 
     private static boolean isBottomRowNavSlot(int slot) {
@@ -108,13 +101,7 @@ public class EarningsChestManager implements Listener {
     }
 
     private static ItemStack createBottomRowFillerPane() {
-        ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta meta = pane.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(" ");
-            pane.setItemMeta(meta);
-        }
-        return pane;
+        return GuiDisplayItem.paperIconWithMeta(Material.GRAY_STAINED_GLASS_PANE, " ", List.of());
     }
 
     private static boolean isBottomRowGlassSlot(int slot) {
@@ -213,7 +200,7 @@ public class EarningsChestManager implements Listener {
             if (session.inventory == null) return;
             List<ItemStack> pageItems = session.shop.getEarningsPageContents(session.page, PAGE_SIZE);
             for (int i = 0; i < PAGE_SIZE; i++) {
-                session.inventory.setItem(i, pageItems.get(i));
+                session.inventory.setItem(i, PhysicalItemProxy.wrapForShopDisplay(pageItems.get(i)));
             }
             session.pageInitialBundles = session.shop.getEarningsBundlesOnPage(session.page, PAGE_SIZE);
             session.viewedRevision = session.shop.getEarningsRevision();

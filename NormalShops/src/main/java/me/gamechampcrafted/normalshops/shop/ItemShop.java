@@ -24,6 +24,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -59,6 +60,8 @@ public class ItemShop implements ConfigurationSerializable {
 
     private boolean notifications;
     private boolean stockWarning;
+    /** When false, owner/trusted never see the private stats hologram above this shop (if enabled globally). */
+    private boolean privateStatsHologramEnabled;
     private long lifetimeSales;
     private long lifetimeRevenue;
     private long lifetimeProductsSold;
@@ -103,6 +106,7 @@ public class ItemShop implements ConfigurationSerializable {
                 BuySound.DEFAULT,
                 true,
                 true,
+                true,
                 0L,
                 0L,
                 0L,
@@ -131,6 +135,7 @@ public class ItemShop implements ConfigurationSerializable {
             BuySound buySound,
             boolean notifications,
             boolean stockWarning,
+            boolean privateStatsHologramEnabled,
             long lifetimeSales,
             long lifetimeRevenue,
             long lifetimeProductsSold,
@@ -156,6 +161,7 @@ public class ItemShop implements ConfigurationSerializable {
         this.buySound = buySound;
         this.notifications = notifications;
         this.stockWarning = stockWarning;
+        this.privateStatsHologramEnabled = privateStatsHologramEnabled;
         this.lifetimeSales = lifetimeSales;
         this.lifetimeRevenue = lifetimeRevenue;
         this.lifetimeProductsSold = lifetimeProductsSold;
@@ -249,7 +255,13 @@ public class ItemShop implements ConfigurationSerializable {
         int collected = earnings;
         ItemStack item = price.clone();
         item.setAmount(price.getAmount() * earnings);
-        Utils.addItem(player, item);
+        if (PhysicalItemProxy.isProxyEnabled()) {
+            for (ItemStack part : PhysicalItemProxy.wrapPlayerGrant(item)) {
+                Utils.addItem(player, part);
+            }
+        } else {
+            Utils.addItem(player, item);
+        }
         earnings = 0;
         markEarningsChanged();
         saveData();
@@ -309,9 +321,10 @@ public class ItemShop implements ConfigurationSerializable {
 
     public int getBundlesFromEarningsItem(ItemStack item) {
         if (item == null || price == null) return 0;
-        if (!item.isSimilar(price)) return 0;
+        ItemStack cmp = PhysicalItemProxy.unwrapForShop(item);
+        if (!cmp.isSimilar(price)) return 0;
         int unit = Math.max(1, price.getAmount());
-        return item.getAmount() / unit;
+        return cmp.getAmount() / unit;
     }
 
     private int getBundlesPerStack() {
@@ -552,6 +565,57 @@ public class ItemShop implements ConfigurationSerializable {
         return earnings;
     }
 
+    /**
+     * Stock line for owner/trusted stats hologram, e.g. {@code 100 Emeralds} or multiple lines separated by commas.
+     */
+    public String formatStatsStockSummary() {
+        if (products == null || products.isEmpty()) {
+            return "No products";
+        }
+        LinkedHashMap<String, ItemStack> templateByLine = new LinkedHashMap<>();
+        for (ItemStack line : products) {
+            if (line == null) {
+                continue;
+            }
+            String key = stockLineKey(line);
+            templateByLine.putIfAbsent(key, line.clone());
+        }
+        List<String> parts = new ArrayList<>();
+        for (ItemStack template : templateByLine.values()) {
+            int count = countTotalStockMatching(template);
+            parts.add(formatStatsAmountName(template, count));
+        }
+        return String.join(", ", parts);
+    }
+
+    /**
+     * Pending currency items for stats hologram (bundles × price per sale), e.g. {@code 200 Diamonds}.
+     */
+    public String formatStatsEarningsSummary() {
+        int perSale = Math.max(1, price.getAmount());
+        int totalItems = earnings * perSale;
+        return formatStatsAmountName(price, totalItems);
+    }
+
+    private static String formatStatsAmountName(ItemStack template, int count) {
+        String name = Utils.getFormattedName(template);
+        if (statsHasCustomDisplayName(template)) {
+            return count + " " + name;
+        }
+        if (count == 1) {
+            return "1 " + name;
+        }
+        return count + " " + name + "s";
+    }
+
+    private static boolean statsHasCustomDisplayName(ItemStack item) {
+        if (!item.hasItemMeta()) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && meta.hasDisplayName();
+    }
+
     public MenuColor getColor() {
         return color;
     }
@@ -568,6 +632,62 @@ public class ItemShop implements ConfigurationSerializable {
 
     public Set<Location> getStockpileSet() {
         return stockpiles;
+    }
+
+    /**
+     * One block location per linked physical inventory (double chest counts once).
+     */
+    public List<Location> listUniqueStockpileAnchorBlocks() {
+        List<Location> out = new ArrayList<>();
+        IdentityHashMap<Inventory, Boolean> seen = new IdentityHashMap<>();
+        for (Location loc : stockpiles) {
+            Inventory inv = getInventoryFromLocation(loc);
+            if (inv == null) {
+                continue;
+            }
+            if (seen.put(inv, Boolean.TRUE) != null) {
+                continue;
+            }
+            out.add(loc.getBlock().getLocation());
+        }
+        return out;
+    }
+
+    /**
+     * True if {@code blockLoc} matches a linked stockpile block for this shop.
+     */
+    public boolean isLinkedStockpileAnchor(Location blockLoc) {
+        Location key = blockLoc.getBlock().getLocation();
+        for (Location s : stockpiles) {
+            if (s.getWorld() != null && key.getWorld() != null
+                    && s.getWorld().equals(key.getWorld())
+                    && s.getBlockX() == key.getBlockX()
+                    && s.getBlockY() == key.getBlockY()
+                    && s.getBlockZ() == key.getBlockZ()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Cloned contents for read-only mirror GUIs; null if not linked, wrong block, or unloaded.
+     */
+    @Nullable
+    public ItemStack[] snapshotStockpileContents(Location anchorBlock) {
+        if (!isLinkedStockpileAnchor(anchorBlock)) {
+            return null;
+        }
+        Inventory inv = getInventoryFromLocation(anchorBlock.getBlock().getLocation());
+        if (inv == null) {
+            return null;
+        }
+        ItemStack[] out = new ItemStack[inv.getSize()];
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack it = inv.getItem(i);
+            out[i] = it == null ? null : it.clone();
+        }
+        return out;
     }
 
     public Set<UUID> getTrustedPlayers() {
@@ -1018,6 +1138,19 @@ public class ItemShop implements ConfigurationSerializable {
 
     public void setStockWarningEnabled(boolean stockWarning) {
         this.stockWarning = stockWarning;
+    }
+
+    public boolean isPrivateStatsHologramEnabled() {
+        return privateStatsHologramEnabled;
+    }
+
+    public void setPrivateStatsHologramEnabled(boolean privateStatsHologramEnabled) {
+        this.privateStatsHologramEnabled = privateStatsHologramEnabled;
+        saveData();
+        NormalShops plugin = NormalShops.getInstance();
+        if (plugin != null && plugin.getPrivateShopStatsHologramManager() != null) {
+            plugin.getPrivateShopStatsHologramManager().onShopPrivateStatsHologramSettingChanged(this);
+        }
     }
 
     public long getLifetimeSales() {

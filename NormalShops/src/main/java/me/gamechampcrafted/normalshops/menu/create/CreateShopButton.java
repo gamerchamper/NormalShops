@@ -5,6 +5,7 @@ import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.Permission;
 import me.gamechampcrafted.normalshops.menu.ChangeShopButton;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -26,7 +27,8 @@ public class CreateShopButton extends ChangeShopButton {
     }
 
     private final ItemStack item = createItem(
-            Message.BUTTON_CREATE_SHOP, Material.ANVIL, false
+            Message.BUTTON_CREATE_SHOP,
+            GuiIcons.material("trading.create-shop", Material.ANVIL), false
     );
 
     @Override

@@ -3,11 +3,14 @@ package me.gamechampcrafted.normalshops.shop;
 import me.gamechampcrafted.normalshops.Logger;
 import me.gamechampcrafted.normalshops.NormalShops;
 import me.gamechampcrafted.normalshops.data.*;
+import me.gamechampcrafted.normalshops.menu.view.ShopsMenuRegions;
 import me.gamechampcrafted.normalshops.serialization.ShopManagerSerializer;
 import me.gamechampcrafted.normalshops.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
 
 public class ShopManager implements ConfigurationSerializable {
 
@@ -82,6 +86,10 @@ public class ShopManager implements ConfigurationSerializable {
         UUID ownerUUID = shop.getOwnerUUID();
         getShopManager(ownerUUID).removeShop(shop);
         uuidMap.remove(shop.getLocation());
+        NormalShops plugin = NormalShops.getInstance();
+        if (plugin != null && plugin.getPrivateShopStatsHologramManager() != null) {
+            plugin.getPrivateShopStatsHologramManager().removeShop(shop.getLocation());
+        }
         saveData(ownerUUID);
         save();
     }
@@ -122,6 +130,7 @@ public class ShopManager implements ConfigurationSerializable {
                 shop.getBuySound(),
                 shop.isNotificationsEnabled(),
                 shop.isStockWarningEnabled(),
+                shop.isPrivateStatsHologramEnabled(),
                 shop.getLifetimeSales(),
                 shop.getLifetimeRevenue(),
                 shop.getLifetimeProductsSold(),
@@ -178,6 +187,77 @@ public class ShopManager implements ConfigurationSerializable {
                 .thenComparingInt(s -> s.getLocation().getBlockX())
                 .thenComparingInt(s -> s.getLocation().getBlockZ()));
         return out;
+    }
+
+    /**
+     * Shops that currently have sellable stock, optionally restricted by {@link me.gamechampcrafted.normalshops.menu.view.ShopsMenuRegions}.
+     */
+    public List<ItemShop> listPublicInStockShops() {
+        List<ItemShop> out = new ArrayList<>();
+        for (Location loc : new ArrayList<>(uuidMap.keySet())) {
+            ItemShop shop = getShop(loc);
+            if (shop == null || shop.isDeleted()) {
+                continue;
+            }
+            if (!shop.hasStock()) {
+                continue;
+            }
+            if (!ShopsMenuRegions.allowsShopAt(shop.getLocation())) {
+                continue;
+            }
+            out.add(shop);
+        }
+        out.sort(Comparator
+                .comparing((ItemShop s) -> s.getLocation().getWorld() != null
+                        ? s.getLocation().getWorld().getName() : "")
+                .thenComparingInt(s -> s.getLocation().getBlockY())
+                .thenComparingInt(s -> s.getLocation().getBlockX())
+                .thenComparingInt(s -> s.getLocation().getBlockZ()));
+        return out;
+    }
+
+    /**
+     * Like {@link #listPublicInStockShops()} but only shops that list at least one product whose
+     * {@link org.bukkit.inventory.ItemStack#getType()} is in {@code materials}.
+     */
+    public List<ItemShop> listPublicInStockShopsSelling(Collection<Material> materials) {
+        if (materials == null || materials.isEmpty()) {
+            return List.of();
+        }
+        Set<Material> want = new HashSet<>(materials);
+        List<ItemShop> out = new ArrayList<>();
+        for (Location loc : new ArrayList<>(uuidMap.keySet())) {
+            ItemShop shop = getShop(loc);
+            if (shop == null || shop.isDeleted()) {
+                continue;
+            }
+            if (!shop.hasStock()) {
+                continue;
+            }
+            if (!ShopsMenuRegions.allowsShopAt(shop.getLocation())) {
+                continue;
+            }
+            if (!shopSellsAnyMaterial(shop, want)) {
+                continue;
+            }
+            out.add(shop);
+        }
+        out.sort(Comparator
+                .comparing((ItemShop s) -> s.getLocation().getWorld() != null
+                        ? s.getLocation().getWorld().getName() : "")
+                .thenComparingInt(s -> s.getLocation().getBlockY())
+                .thenComparingInt(s -> s.getLocation().getBlockX())
+                .thenComparingInt(s -> s.getLocation().getBlockZ()));
+        return out;
+    }
+
+    private static boolean shopSellsAnyMaterial(ItemShop shop, Set<Material> want) {
+        for (ItemStack p : shop.getProducts()) {
+            if (p != null && want.contains(p.getType())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getShopCount(UUID uuid) {

@@ -2,7 +2,9 @@ package me.gamechampcrafted.normalshops.menu.buy;
 
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.menu.ClickHandler;
+import me.gamechampcrafted.normalshops.menu.Menu;
 import me.gamechampcrafted.normalshops.menu.MenuColor;
+import me.gamechampcrafted.normalshops.menu.ShopGuiLayout;
 import me.gamechampcrafted.normalshops.menu.ShopMenu;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.utils.MessageParametizer;
@@ -17,9 +19,14 @@ public class BuyMenu extends ShopMenu {
     @Override
     protected void setupButtons() {
         ItemShop shop = getShop();
-        addButton(new BuyButton(21, shop));
+        addButton(new BuyButton(Menu.buySlot(), shop));
 
         addPriceAndProductButtons(false);
+    }
+
+    @Override
+    protected void onAfterPlaceButtons() {
+        paintLayoutFillers("trading", ShopGuiLayout.get().tradingFillerSlots());
     }
 
     private static String getTitle(ItemShop shop) {

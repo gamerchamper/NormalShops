@@ -2,7 +2,7 @@
 # NormalShops settings
 # NOTE: RELOAD/RESTART SERVER FOR CHANGES TO TAKE EFFECT
 #########################################################
-config-version: 3
+config-version: 15
 
 # Supported languages: plugins/…/messages/<locale>.yml — bundled locales merge new keys from the jar when outdated.
 # Currently bundled in the jar: en_US, de_DE, tr_TR. Other codes get a new file seeded from English.
@@ -26,6 +26,16 @@ display-view-range: 2
 # and restored automatically. Admins with unlimited/special stock are unaffected.
 display-out-of-stock: false
 
+# Floating stats (stock + pending earnings) above each shop block, only visible to the shop owner
+# and players trusted on that shop. Others never see these displays.
+private-shop-stats-holograms: false
+# How often (server ticks) to remove stacked/drifted stats TextDisplays above shops. 0 = only manual /normalshops stats-holograms cleanup.
+# Default 40 (~2 seconds at 20 TPS). Lower = more aggressive (more work if you have many shops in loaded chunks).
+stats-hologram-auto-cleanup-ticks: 40
+
+# Seconds between purchases from the same shop block (classic buy GUI + villager merchant). 0 = no limit.
+buy-cooldown-seconds: 10
+
 # If this setting is enabled, earnings at a shop will be collected by the deleter
 # when someone with the permission "normalshops.delete" deletes the shop.
 operator-delete-shop-collect: false
@@ -36,6 +46,9 @@ visualize-tethers: true
 # This behaves slightly differently if "visualize-tethers" is disabled.
 # Default: 100
 max-connection-distance: 100
+
+# Shop chest trading / owner layouts, every other GUI grid, and icon materials live in gui.yml (reload merges new keys).
+# Optional legacy fallback: add a shop-gui section with trading-layout / owner-layout or numeric slots — see plugin wiki.
 
 # Limits
 shop-limit-per-player: 30
@@ -55,6 +68,19 @@ full-nbt-check: false
 # If true, buyers use the villager/merchant trade UI; if false, the classic buy GUI.
 villager-trading-menu: true
 
+# GUI “fake” items (paper + item model) are tagged with a unique id in NBT (PersistentDataContainer).
+# Periodically removes those items from main/offhand/armor, cursor, and ender chest if a player has them (e.g. glitched out of a menu).
+# 0 = disabled. Default 100 ticks (5s at 20 TPS).
+gui-item-leak-sweep-ticks: 100
+
+# When true, shop stock + earnings GUI slots use paper proxies (same visual system as menu icons) with a unique ledger id.
+# Purchased items and /collect earnings grants use proxies too. Proxies turn into real items once totals match (anti-dupe).
+# physical-item-proxy-max-units-per-stack caps each proxy stack size when giving items to players (large payouts split).
+physical-item-proxy-enabled: false
+physical-item-proxy-max-units-per-stack: 64
+# Ticks between scans that replace valid proxies with real items or delete excess duplicated mass (0 = off).
+physical-item-proxy-resolve-ticks: 20
+
 # WARNING: DO NOT TURN THIS SETTING ON UNLESS YOU KNOW WHAT YOU'RE DOING!
 # This is used for resynchronizing the "data.yml" file and the files in the "shops" folder.
 # Only use this in extreme situations where the data.yml file is corrupted.
@@ -67,5 +93,24 @@ recover-shop-files: false
 auto-data-backup-enabled: true
 auto-data-backup-interval-minutes: 10
 auto-data-backup-max-snapshots: 48
+
+# ─── /shops browser ───
+# When false, /shops does nothing for players (admins can turn off the public browser).
+# /shops lists in-stock shops (optionally limited by shops-menu-regions). /shops <item> or /shops item <name>
+# uses the same region filter and fuzzy names to find shops selling that product type.
+shops-command-enabled: true
+
+# Seconds between teleports from the public shop browser (0 = no cooldown).
+shops-menu-teleport-cooldown-seconds: 30
+
+# When empty, all loaded worlds may appear in /shops (still only in-stock shops).
+# When you add entries, only shops whose container block lies inside at least one horizontal region are listed.
+# Two corners (world + block x,z; y optional and ignored) define the rectangle on the ground — all Y levels count.
+# shops-menu-regions:
+#   - corners:
+#       - { world: world, x: -50, z: -50 }
+#       - { world: world, x: 50, z: 50 }
+# Legacy: world + min-x, max-x, min-z, max-z (same XZ rectangle; min-y/max-y are ignored).
+shops-menu-regions: [ ]
 
 

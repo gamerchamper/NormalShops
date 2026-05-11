@@ -13,15 +13,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Set;
 
-import static me.gamechampcrafted.normalshops.menu.Menu.EDITABLE_SLOTS;
-import static me.gamechampcrafted.normalshops.menu.Menu.PRICE_SLOT;
-
 public class EditableClickHandler extends ClickHandler {
 
     @Override
     public boolean handleClick(InventoryClickEvent event) {
         int slot = event.getSlot();
-        if (!EDITABLE_SLOTS.contains(slot)) {
+        if (!Menu.editableSlots().contains(slot)) {
             return super.handleClick(event);
         }
 
@@ -65,7 +62,7 @@ public class EditableClickHandler extends ClickHandler {
 
         int slot = slots.iterator().next();
 
-        if (!EDITABLE_SLOTS.contains(slot)) {
+        if (!Menu.editableSlots().contains(slot)) {
             super.handleDrag(event);
             return;
         }
@@ -94,7 +91,7 @@ public class EditableClickHandler extends ClickHandler {
     }
 
     private Button createEmptyButton(int slot) {
-        if (slot == PRICE_SLOT) {
+        if (slot == Menu.priceSlot()) {
             return new PriceButton(slot);
         }
         return new ProductButton(slot);

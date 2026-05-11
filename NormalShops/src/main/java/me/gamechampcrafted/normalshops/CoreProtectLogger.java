@@ -91,43 +91,44 @@ public class CoreProtectLogger {
     }
 
     public static void logShopBuy(Player buyer, Player owner, Location location, ItemStack price, ItemStack product) {
+        String ownerName = owner != null ? owner.getName() : "unknown";
+        Logger.info("Logging shop buy: " + buyer.getName() + " from " + ownerName + " at " + formatLocation(location));
+        addShopHistory(location, buyer.getName(), "SHOP_BUY",
+                "Paid: " + formatItem(price) + " | Received: " + formatItem(product) + " | Seller: " + ownerName);
         if (api == null) {
-            Logger.info("CoreProtect API not available - skipping shop buy log");
+            Logger.info("CoreProtect API not available - skipping external interaction log");
             return;
         }
-        String message = "Bought " + formatItem(product) + " for " + formatItem(price) + " from " + owner.getName();
-        Logger.info("Logging shop buy: " + buyer.getName() + " from " + owner.getName() + " at " + formatLocation(location));
+        String message = "Bought " + formatItem(product) + " for " + formatItem(price) + " from " + ownerName;
         logInteraction(buyer, location, message);
-        addShopHistory(location, buyer.getName(), "SHOP_BUY",
-                "Paid: " + formatItem(price) + " | Received: " + formatItem(product) + " | Seller: " + owner.getName());
     }
 
     public static void logShopBuyVillager(Player buyer, String ownerName, Location location, ItemStack price, List<ItemStack> products) {
-        if (api == null) {
-            Logger.info("CoreProtect API not available - skipping villager shop buy log");
-            return;
-        }
         String seller = ownerName == null || ownerName.isEmpty() ? "unknown" : ownerName;
         String received = formatItems(products);
-        String message = "[VILLAGER] Bought " + received + " for " + formatItem(price) + " from " + seller;
         Logger.info("Logging villager shop buy: " + buyer.getName() + " from " + seller + " at " + formatLocation(location));
-        logInteraction(buyer, location, message);
         addShopHistory(location, buyer.getName(), "SHOP_BUY_VILLAGER",
                 "Paid: " + formatItem(price) + " | Received: " + received + " | Seller: " + seller);
+        if (api == null) {
+            Logger.info("CoreProtect API not available - skipping external interaction log");
+            return;
+        }
+        String message = "[VILLAGER] Bought " + received + " for " + formatItem(price) + " from " + seller;
+        logInteraction(buyer, location, message);
     }
 
     public static void logShopBuyEmulated(Player admin, Player owner, Location location, ItemStack price, ItemStack product) {
-        if (api == null) {
-            Logger.info("CoreProtect API not available - skipping emulated shop buy log");
-            return;
-        }
         String ownerName = owner != null ? owner.getName() : "unknown";
-        String message = "[EMULATED] Bought " + formatItem(product) + " for " + formatItem(price)
-                + " from " + ownerName + " (triggered by " + admin.getName() + ")";
         Logger.info("Logging emulated shop buy: " + admin.getName() + " at " + formatLocation(location));
-        logInteraction("NormalShops-EmulatedSale", location, message, admin);
         addShopHistory(location, admin.getName(), "SHOP_BUY_EMULATED",
                 "Paid: " + formatItem(price) + " | Received: " + formatItem(product) + " | Seller: " + ownerName);
+        if (api == null) {
+            Logger.info("CoreProtect API not available - skipping external interaction log");
+            return;
+        }
+        String message = "[EMULATED] Bought " + formatItem(product) + " for " + formatItem(price)
+                + " from " + ownerName + " (triggered by " + admin.getName() + ")";
+        logInteraction("NormalShops-EmulatedSale", location, message, admin);
     }
 
     public static void logShopEdit(Player player, Location location, String editType) {

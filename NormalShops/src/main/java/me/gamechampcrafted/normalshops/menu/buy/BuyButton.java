@@ -3,6 +3,7 @@ package me.gamechampcrafted.normalshops.menu.buy;
 import me.gamechampcrafted.normalshops.data.Message;
 import me.gamechampcrafted.normalshops.data.MessageType;
 import me.gamechampcrafted.normalshops.data.Permission;
+import me.gamechampcrafted.normalshops.menu.GuiIcons;
 import me.gamechampcrafted.normalshops.menu.ShopButton;
 import me.gamechampcrafted.normalshops.shop.ItemShop;
 import me.gamechampcrafted.normalshops.shop.Transaction;
@@ -27,9 +28,10 @@ public class BuyButton extends ShopButton {
                 Message.BUTTON_BUY.getParameterizedLore(new Parameterizer<>()
                         .put("player", shop.getOwnerName())
                         .put("price", Utils.formatItemWithAmount(shop.getPrice()))),
-                Material.LIME_CONCRETE_POWDER, false);
+                GuiIcons.material("trading.buy-in-stock", Material.LIME_CONCRETE_POWDER), false);
         outOfStockButton =
-                createItem(Message.BUTTON_OUT_OF_STOCK, Material.RED_CONCRETE_POWDER, false);
+                createItem(Message.BUTTON_OUT_OF_STOCK,
+                        GuiIcons.material("trading.buy-out-of-stock", Material.RED_CONCRETE_POWDER), false);
     }
 
     @Override
