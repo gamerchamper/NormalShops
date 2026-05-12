@@ -345,3 +345,5 @@ Key files live in **`plugins/NormalShops/`** (or **`plugins/ClickShop/`** if tha
 ---
 
 [← Back to project README](README.md)
+
+Idea from https://github.com/Clickism/ClickShop - Clickism. Heavily Modified and Updated.
