@@ -8,6 +8,16 @@ Media files live in the **[`imgs/`](https://github.com/gamerchamper/NormalShops/
 <img width="400" alt="Outside view of a NormalShops storefront" src="https://raw.githubusercontent.com/gamerchamper/NormalShops/main/imgs/shop.png" />
 </p>
 
+### Villager Menus used as trading
+
+<p align="center">
+<img width="400" alt="Outside view of a NormalShops storefront" src="https://raw.githubusercontent.com/gamerchamper/NormalShops/refs/heads/main/imgs/trade1.png" />
+</p>
+
+<p align="center">
+<img width="400" alt="Outside view of a NormalShops storefront" src="https://raw.githubusercontent.com/gamerchamper/NormalShops/refs/heads/main/imgs/trade2.png" />
+</p>
+
 *Custom display: item showcase, glass/base blocks, and optional sale-style floating text.*
 
 ### `/shops` — public shop browser
