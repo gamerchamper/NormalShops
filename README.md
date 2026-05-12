@@ -52,6 +52,12 @@ Media files live in the **[`imgs/`](https://github.com/gamerchamper/NormalShops/
 
 *GIF: interact with an empty chest/barrel with a sign, set price and products, and open for business. (Exact flow matches your server’s messages and GUI version.)*
 
+### Metrics
+
+<p align="center">
+<img width="640" alt="bstats" src="https://bstats.org/signatures/bukkit/normalshops.svg" />
+</p>
+
 ---
 
 ## Why NormalShops?
